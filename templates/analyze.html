@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analyze Finances with Gemini</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Gemini Finance Input</h1>
+        <form method="post" action="/analyze">
+            <textarea name="input_text" rows="4" placeholder="Describe your income and expenses..."></textarea>
+            <button type="submit">Submit</button>
+        </form>
+        {% if success is defined %}
+            {% if success %}
+                <p class="success">✅ Entries processed successfully!</p>
+            {% else %}
+                <p class="error">⚠️ No entries were added. Try again.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>

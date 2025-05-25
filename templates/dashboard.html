@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finance Tracker Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Finance Tracker</h1>
+
+        <section>
+            <h2>Income Entries</h2>
+            <table>
+                <tr><th>Source</th><th>Amount</th><th>Description</th><th>Date</th></tr>
+                {% for entry in incomes %}
+                <tr>
+                    <td>{{ entry.source }}</td>
+                    <td>{{ entry.amount }}</td>
+                    <td>{{ entry.description }}</td>
+                    <td>{{ entry.timestamp.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+
+        <section>
+            <h2>Expense Entries</h2>
+            <table>
+                <tr><th>Category</th><th>Item</th><th>Amount</th><th>Date</th></tr>
+                {% for entry in expenses %}
+                <tr>
+                    <td>{{ entry.category }}</td>
+                    <td>{{ entry.item }}</td>
+                    <td>{{ entry.amount }}</td>
+                    <td>{{ entry.timestamp.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+    </div>
+</body>
+</html>
