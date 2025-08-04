@@ -101,19 +101,19 @@ config = types.GenerateContentConfig(
 
 # Define agent prompt
 prompt = """
-"dupurer khabarer jonno 200 taka khoroch hoyeche, auto 30tk, abbu 4000tk, boi kinechi 500 taka"
+"dupurer khabarer jonno 200 taka khoroch hoyeche, auto 30tk, abbu 4000tk, boi kinechi 500 taka, amake aro 3000 taka diyeche khala, ghori er dam 50000 taka"
 """
 
 # Call Gemini with schema
-client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+client = genai.Client(api_key=os.environ["GOOGLE_API_KEY_MD"])
 response = client.models.generate_content(
-    model="gemini-2.0-flash",
+    model="gemini-2.0-flash-lite",
     contents="input: " + prompt,
     config=config,
     # response_mime_type="application/json",
 )
 
-# print(response.text)  # JSON string
+print(response)  # JSON string
 # response_obj: FinanceResponse = response.parsed  # Pydantic object
 
 found_function_call = False
@@ -142,3 +142,6 @@ if not found_function_call:
     print("No function call found in the response.")
     # Print the response text only if no function call was found
     print(response.text)
+    print(f"\n\n\n\n\n\n\n")
+    # Print the response object
+    print(response)

@@ -11,9 +11,40 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from supabase import create_client, Client
 
 load_dotenv()
 init_db()
+
+# Initialize Supabase client
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_API_KEY")
+service_role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+supabase: Client = create_client(url, service_role_key)
+
+
+
+def add_income_entry_to_supabase(source: str, amount: int, description: str, user_id: str) -> dict:
+    result = supabase.table("income_entries").insert({
+        "source": source,
+        "amount": amount,
+        "description": description,
+        "user_id": user_id,
+    }).execute()
+    print(f"{source} income added - Amount: {amount}, Description: {description}")
+
+    return {"status": "success", "type": "income"}
+
+def add_expense_entry_to_supabase(category: str, item: str, amount: int, user_id: str) -> dict:
+    result = supabase.table("expense_entries").insert({
+        "category": category,
+        "item": item,
+        "amount": amount,
+        "user_id": user_id,
+    }).execute()
+
+    print("Saved expense:", result)
+    return {"status": "success", "type": "expense"}
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -70,12 +101,14 @@ async def analyze_submit(
                 fn = part.function_call
                 args = fn.args
                 if fn.name == "add_income_entry":
-                    session.add(Income(**args))
+                    # session.add(Income(**args))
+                    add_income_entry_to_supabase(args['source'], args['amount'], args['description'], user_id="d45a2ec6-cfb9-4025-aeac-32ad0fecbca2")
                     success = True
                 elif fn.name == "add_expense_entry":
-                    session.add(Expense(**args))
+                    # session.add(Expense(**args))
+                    add_expense_entry_to_supabase(args['category'], args['item'], args['amount'], user_id="d45a2ec6-cfb9-4025-aeac-32ad0fecbca2")
                     success = True
-        session.commit()
+        # session.commit()
 
     return templates.TemplateResponse("analyze.html", {
         "request": request,
@@ -86,4 +119,4 @@ async def analyze_submit(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
