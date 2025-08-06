@@ -1,5 +1,8 @@
 import os
 from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_user(supabase: Client, email: str, password: str):
     """Create a new user in Supabase."""
@@ -23,10 +26,7 @@ def list_users(supabase: Client):
         page=1,
         per_page=1000,
     )
-    if response.error:
-        print(f"Error listing users: {response.error.message}")
-    else:
-        return response.data
+    return response
 
 def fetch_data(supabase: Client, table_name: str):
     response = supabase.table(table_name).select("*").execute()
@@ -35,10 +35,19 @@ def fetch_data(supabase: Client, table_name: str):
     else:
         return response.data
 
+def check_email_exists(supabase: Client, email: str) -> bool:
+    response = supabase.table("users").select("id").execute()
+    return len(response.data) > 0
+
 # Initialize Supabase client
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_API_KEY")
-supabase: Client = create_client(url, key)
+service_role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+
+supabase: Client = Client(
+    supabase_url=url,
+    supabase_key=service_role_key
+)
 
 
 # Create a new user
@@ -49,22 +58,19 @@ supabase: Client = create_client(url, key)
 # )
 
 # Sign in a user
-sign_in_user(
-    supabase,
-    email="raihanulhaque404@gmail.com",
-    password="sa1tama_"
-)
-print(supabase.auth.get_user().user.id)
+# sign_in_user(
+#     supabase,
+#     email="raihanulhaque404@gmail.com",
+#     password="sa1tama_"
+# )
+# print(supabase.auth.get_user().user.id)
 
 # user_id = "d45a2ec6-cfb9-4025-aeac-32ad0fecbca2"
 # limit = 5
 
-# response = supabase.table("expense_entries") \
-#     .select("*") \
-#     .eq("user_id", user_id) \
-#     .order("created_at", desc=True) \
-#     .limit(limit) \
-#     .execute()
+users = list_users(supabase)
+if users:
+    for user in users:
+        print(f"User ID: {user.id}, Email: {user.email}")
 
-
-# print(f"Response: {response}")
+print("User listing complete.")
