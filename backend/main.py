@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from functions import tools, add_income_entry, add_expense_entry
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
@@ -46,9 +50,11 @@ def add_expense_entry_to_supabase(category: str, item: str, amount: int, user_id
     print("Saved expense:", result)
     return {"status": "success", "type": "expense"}
 
+_HERE = Path(__file__).parent
+
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory=str(_HERE / "static")), name="static")
+templates = Jinja2Templates(directory=str(_HERE / "templates"))
 
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY_404_HISHAB"))
 

@@ -3,6 +3,8 @@ from google.genai import types
 from pydantic import BaseModel
 from typing import List, Literal, Union
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Define schema
 # class IncomeEntry(BaseModel):
@@ -105,9 +107,9 @@ prompt = """
 """
 
 # Call Gemini with schema
-client = genai.Client(api_key=os.environ["GOOGLE_API_KEY_MD"])
+client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
 response = client.models.generate_content(
-    model="gemini-2.0-flash-lite",
+    model="gemini-2.5-flash-lite",
     contents="input: " + prompt,
     config=config,
     # response_mime_type="application/json",

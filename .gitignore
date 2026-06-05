@@ -1,4 +1,12 @@
-__pycache__
+__pycache__/
 *.py[cod]
 *.pyo
 *.db
+.DS_Store
+.vscode/
+
+
+# Large model artifacts — store externally or use HF Hub
+ml/models/*/training/banglish_embedding_warmup/
+ml/models/*/training/sft_lora/
+unsloth_compiled_cache/
