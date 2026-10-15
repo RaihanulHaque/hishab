@@ -39,8 +39,8 @@ match (Banglish 84.0%). On the phone, pick a quant by size budget:
 
 | GGUF | MB | exact | notes |
 |---|---|---|---|
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q6_K | 630 | 86.5 | best quality |
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q4_K_M-imat | 529 | 84.6 | default phone build |
+| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q6_K | 630 | 86.5 | **recommended**: in kiln it got 5/6 hard Banglish probes, Q4_K_M-imat got 3/6 |
+| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q4_K_M-imat | 529 | 84.6 | smallest Qwen build; loses spelled-out numbers and loan direction |
 | `hishab-lfm2.5-350m-two-phase-lora-v4-GGUF` Q5_K_M | 260 | 84.7 | fast tier, 3x faster |
 
 The 518-row test set has a label-noise ceiling near 90%: most remaining misses are
