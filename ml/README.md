@@ -82,12 +82,16 @@ Descriptions are not scored (free text). Everything is reported overall and per 
 `ml/data/generate_banglish.py` builds sentences from the hand-authored lexicon in
 `ml/data/lexicon/banglish.py` (about 580 surface forms over 14 categories with realistic BDT
 ranges, spelling variants, income/expense verbs, time words, connectors, number slang such as
-`4.5k`, `12 hajar`, `১,২০০`, `2 lakh`). Labels are exact by construction. It is weighted toward
+`4.5k`, `12 hajar`, `১,২০০`, `2 lakh`, and spelled-out numbers such as `ponero hajar`,
+`আড়াই হাজার`, `der lakh`, `pachsho`). Labels are exact by construction. It is weighted toward
 the weak spots of the v3 model: Banglish rent / loan / gift / medical / utilities, Bangla
-mobile_recharge / other, and income verbs. `ml/datasets/synthetic_handwritten_v1.jsonl` adds 113
-free-form human-written messages. Both go to the **train split only** (`--extra-train`), so the
-v3 validation / test sets stay identical and numbers remain comparable. Runs trained on the
-enlarged data carry the `--tag v4` suffix.
+mobile_recharge / other, and income verbs. `ml/datasets/synthetic_handwritten_v1.jsonl` adds 155
+free-form human-written messages (113 general, then 42 aimed at the error classes in
+`ml/results/ERROR_ANALYSIS.md`: medicine after a doctor visit, data packs, loan direction,
+family remittances, education side-costs, spelled-out numbers, totals). Both go to the
+**train split only** (`--extra-train`), so the v3 validation / test sets stay identical and
+numbers remain comparable. Runs trained on the enlarged data carry the `--tag v4` suffix
+(5000 programmatic + 113 hand-written) or `--tag v5` (number words + 42 more hand-written rows).
 
 ## Why v3 splits
 
