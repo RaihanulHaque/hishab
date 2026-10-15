@@ -35,7 +35,9 @@ commit. The two best configurations were then retrained on 9.5k rows (v3 + 5k pr
 Banglish/Bangla rows + 155 hand-written rows; see `ml/README.md`) as `v4` / `v5`.
 
 Best full-precision model: **Qwen3.5-0.8B, JSON-only output, v5**: 88.2% exact transaction
-match (Banglish 84.0%). On the phone, pick a quant by size budget:
+match (Banglish 84.0%), published as
+[`ryuma007/hishab-qwen3.5-0.8b-json-lora-v5`](https://huggingface.co/ryuma007/hishab-qwen3.5-0.8b-json-lora-v5)
+(merged bf16 safetensors). On the phone, pick a quant by size budget:
 
 | GGUF | MB | exact | notes |
 |---|---|---|---|
