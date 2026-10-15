@@ -1,0 +1,73 @@
+{
+  "seed": 42,
+  "dropped": {
+    "duplicate": 14
+  },
+  "missing_translation": 0,
+  "splits": {
+    "train": {
+      "n": 4409,
+      "language": {
+        "banglish": 1863,
+        "bangla": 1062,
+        "mixed": 636,
+        "english": 848
+      },
+      "source": {
+        "base": 4240,
+        "hard": 169
+      },
+      "n_tx": {
+        "0": 11,
+        "1": 1449,
+        "2": 2387,
+        "3": 494,
+        "4": 46,
+        "5": 19,
+        "6": 3
+      }
+    },
+    "validation": {
+      "n": 259,
+      "language": {
+        "mixed": 37,
+        "english": 50,
+        "bangla": 62,
+        "banglish": 110
+      },
+      "source": {
+        "base": 249,
+        "hard": 10
+      },
+      "n_tx": {
+        "1": 79,
+        "2": 141,
+        "3": 34,
+        "4": 4,
+        "5": 1
+      }
+    },
+    "test": {
+      "n": 518,
+      "language": {
+        "mixed": 75,
+        "english": 99,
+        "banglish": 219,
+        "bangla": 125
+      },
+      "source": {
+        "base": 498,
+        "hard": 20
+      },
+      "n_tx": {
+        "0": 1,
+        "1": 176,
+        "2": 279,
+        "3": 51,
+        "4": 9,
+        "5": 1,
+        "6": 1
+      }
+    }
+  }
+}
