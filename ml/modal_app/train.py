@@ -111,6 +111,7 @@ def train(
     max_steps: int = -1,
     eval_limit: int = 0,
     train_limit: int = 0,
+    tag: str = "",
 ) -> dict:
     from datasets import Dataset
     from peft import LoraConfig
@@ -121,7 +122,7 @@ def train(
     from hishab.registry import MODELS, run_name
 
     spec = MODELS[model_key]
-    name = run_name(model_key, fmt, tune)
+    name = run_name(model_key, fmt, tune) + (f"__{tag}" if tag else "")
     out_dir = Path(RUNS_DIR) / name
     out_dir.mkdir(parents=True, exist_ok=True)
     lr = lr if lr is not None else (2e-4 if tune == "lora" else 3e-5)
@@ -218,6 +219,7 @@ def train(
         "epochs": epochs,
         "lr": lr,
         "lora_r": lora_r if tune == "lora" else None,
+        "tag": tag,
         "train_rows": len(train_rows),
         "train_time_s": round(train_time),
         "best_eval_loss": min((h["eval_loss"] for h in trainer_state_eval(out_dir)), default=None),
@@ -288,6 +290,7 @@ def main(
     eval_limit: int = 0,
     train_limit: int = 0,
     eval_only: str = "",
+    tag: str = "",
 ):
     if eval_only:
         for r in eval_hf.map([x.strip() for x in eval_only.split(",") if x.strip()], kwargs={"eval_limit": eval_limit}):
@@ -298,7 +301,7 @@ def main(
     print(f"launching {len(jobs)} runs: {jobs}")
     handles = {
         (m, f): train.spawn(m, f, tune=tune, epochs=epochs, lr=lr, lora_r=lora_r, max_steps=max_steps,
-                            eval_limit=eval_limit, train_limit=train_limit)
+                            eval_limit=eval_limit, train_limit=train_limit, tag=tag)
         for m, f in jobs
     }
     summary = []

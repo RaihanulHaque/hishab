@@ -63,6 +63,9 @@ def main() -> None:
     ap.add_argument("--val-frac", type=float, default=0.05)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--translations", type=Path, default=None, help="local copy of the v2 train parquet")
+    ap.add_argument("--extra-train", type=Path, nargs="*", default=[],
+                    help="additional dataset files (same row format) added to the TRAIN split only, so the "
+                         "validation / test sets stay identical to the v3 release")
     args = ap.parse_args()
 
     parquet = args.translations or (OUT / "_v2_train.parquet")
@@ -125,11 +128,33 @@ def main() -> None:
         splits["test"] += bucket[:n_test]
         splits["validation"] += bucket[n_test : n_test + n_val]
         splits["train"] += bucket[n_test + n_val :]
+    extra_added = 0
+    held = {norm_key(r["instruction"]) for r in splits["test"] + splits["validation"]}
+    for path in args.extra_train:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            user = next((m["content"] for m in r["messages"] if m["role"] == "user"), None)
+            key = norm_key(user or "")
+            if not user or key in seen or key in held:
+                dropped["extra_duplicate"] += 1
+                continue
+            seen.add(key)
+            meta = r.get("metadata", {})
+            splits["train"].append({
+                "id": r["id"], "language": meta.get("lang", "unknown"), "complexity": meta.get("complexity", "unknown"),
+                "source": meta.get("generated_by", "extra"), "instruction": user, "translation": "",
+                "transactions": [{"description": t["description"], "amount": float(t["amount"]),
+                                  "category": t["category"], "type": t["type"]} for t in r["raw_transactions"]],
+            })
+            extra_added += 1
     for s in splits.values():
         rng.shuffle(s)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    stats = {"seed": args.seed, "dropped": dict(dropped), "missing_translation": missing_tr, "splits": {}}
+    stats = {"seed": args.seed, "dropped": dict(dropped), "missing_translation": missing_tr,
+             "extra_train_rows": extra_added, "extra_train_files": [str(p) for p in args.extra_train], "splits": {}}
     for name, s in splits.items():
         with (OUT / f"{name}.jsonl").open("w", encoding="utf-8") as f:
             for r in s:

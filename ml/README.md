@@ -39,7 +39,9 @@ Both are trained and compared. Loss is on the completion only (TRL prompt-comple
 
 ```bash
 # 1. splits (laptop; needs pyarrow for the v2 parquet with translations)
-conda run -n ML python ml/data/build_splits.py
+conda run -n ML python ml/data/generate_banglish.py --n 5000 --seed 7      # programmatic Banglish/Bangla rows, no API
+conda run -n ML python ml/data/build_splits.py \
+    --extra-train ml/datasets/synthetic_programmatic_v1.jsonl ml/datasets/synthetic_handwritten_v1.jsonl
 conda run -n ML modal volume put hishab-data ml/datasets/splits /splits --force
 conda run -n ML modal run ml/modal_app/push_dataset.py
 
@@ -74,6 +76,18 @@ Per example, after lenient parsing (code fences stripped, `JSON:` marker optiona
 | empty acc | gold `[]` rows answered with `[]` |
 
 Descriptions are not scored (free text). Everything is reported overall and per language.
+
+## Extra training data without an LLM
+
+`ml/data/generate_banglish.py` builds sentences from the hand-authored lexicon in
+`ml/data/lexicon/banglish.py` (about 580 surface forms over 14 categories with realistic BDT
+ranges, spelling variants, income/expense verbs, time words, connectors, number slang such as
+`4.5k`, `12 hajar`, `১,২০০`, `2 lakh`). Labels are exact by construction. It is weighted toward
+the weak spots of the v3 model: Banglish rent / loan / gift / medical / utilities, Bangla
+mobile_recharge / other, and income verbs. `ml/datasets/synthetic_handwritten_v1.jsonl` adds 113
+free-form human-written messages. Both go to the **train split only** (`--extra-train`), so the
+v3 validation / test sets stay identical and numbers remain comparable. Runs trained on the
+enlarged data carry the `--tag v4` suffix.
 
 ## Why v3 splits
 
