@@ -16,106 +16,74 @@ Valid categories: `food`, `grocery`, `rent`, `utilities`, `mobile_recharge`, `tr
 
 ```
 hishab/
-├── backend/          # FastAPI app (Gemini-powered, Supabase persistence)
+├── backend/            # FastAPI app (Gemini-powered, Supabase persistence)
 ├── ml/
-│   ├── datasets/     # Training data and generation scripts (model-agnostic)
-│   ├── scripts/      # Data utilities (token analysis, corpus building)
-│   └── models/
-│       └── qwen3_0_8b/          # Model-specific work — add gemma_3_1b/ etc. here
-│           ├── tokenizer/       # Tokenizer analysis, expansion, and artifacts
-│           └── training/        # Pretrain + SFT scripts and model checkpoints
-└── experiments/      # Past experiments and scratch notebooks
+│   ├── hishab/         # pure-python shared package: schema, prompts, metrics, model registry
+│   ├── data/           # build_splits.py -> ml/datasets/splits/{train,validation,test}.jsonl
+│   ├── modal_app/      # Modal apps: train.py, gguf.py, report.py, push_dataset.py (see ml/README.md)
+│   ├── datasets/       # raw synthetic data + splits + pretraining corpus
+│   ├── scripts/        # Gemini dataset-generation utilities
+│   └── results/        # RESULTS.md / results.json written by report.py
+├── experiments/        # notebooks (the TRL notebooks produced the published v2 HF models)
+├── docs/               # HANDOFF_2026-01 (old tokenizer-expansion plan, code not in this checkout)
+└── README.md
 ```
 
 ## Environment
 
-All ML work runs in the `ML` conda environment:
+Use the `ML` conda env for every command: `conda run -n ML ...`.
 
-```bash
-conda run -n ML python <script.py>
-```
+**This machine has no GPU and the `ML` env has no transformers/trl/peft.** It only has `modal`,
+CPU torch and fastapi. All training, evaluation and GGUF work runs on Modal
+(`conda run -n ML modal run ml/modal_app/<app>.py ...`). Images pin `transformers==5.10.2`,
+`trl==1.5.1`, `peft==0.19.1`. The GGUF image builds llama.cpp at the commit kiln
+(`../kiln/third_party/llama.cpp`) is pinned to, so phone and eval numerics agree.
 
-Training scripts require a CUDA GPU — they deliberately raise if `torch.cuda.is_available()` is False. The current development machine has no GPU; run training on a separate GPU machine/runtime.
+Secrets: the Modal secret `huggingface-secret` exposes `HF_TOKEN` (the `HF_TOKEN2` in `.env`
+is dead). `.env` is tracked in git and the TRL notebooks contain a hardcoded HF token: rotate
+before publishing anything.
 
-Key packages: `torch 2.9.1+cu130`, `transformers 5.5.0`, `datasets 4.3.0`, `peft`, `trl`, `bitsandbytes`, `accelerate`, `unsloth`, `google-genai`, `tokenizers`
+## Pipeline (current)
 
-API keys are in `.env` (Hugging Face, `GOOGLE_API_KEY` for Gemini, Supabase, etc.).
+Full details and commands in `ml/README.md`.
 
-## Training Pipeline
+1. `ml/data/build_splits.py` dedupes the 5200 synthetic rows (14 near-duplicates) and makes a
+   stratified 4409 / 259 / 518 train / validation / test split. The published
+   `ryuma007/hishab-synthetic-v2` validation split is a subset of its train split; never
+   report numbers on it.
+2. `ml/modal_app/train.py` runs TRL SFT (LoRA, completion-only loss, prompt-completion
+   format) for each (model, output format) in parallel, merges the adapter, and evaluates
+   bf16 greedy generation on validation + test. Output formats: `json` (array only) and
+   `two_phase` (`TRANSLATION:` line then `JSON:`).
+3. `ml/modal_app/gguf.py` converts a run to F16 GGUF, builds an in-domain imatrix, writes
+   Q8_0 .. IQ3 quants and evaluates each with `llama-server`.
+4. `ml/modal_app/report.py` aggregates everything into `ml/results/RESULTS.md`.
 
-The pipeline has 5 phases, run in order:
-
-### Phase 1 — Dataset Generation (COMPLETE: 5000 rows)
-
-```bash
-conda run -n ML python ml/scripts/append_synthetic_dataset.py --target-total 5000 --balanced-5000
-```
-
-Uses Gemini (`gemini-2.5-flash-lite`) to generate synthetic examples. Writes to both `ml/datasets/synthetic_dataset.jsonl` (with metadata) and `ml/datasets/synthetic_dataset_chatml.jsonl` (pure ChatML). Language target: 40% banglish, 25% bangla, 20% english, 15% mixed.
-
-### Phase 2 — Tokenizer Analysis & Expansion (COMPLETE)
-
-```bash
-# Analyze base tokenizer efficiency on the dataset
-conda run -n ML python ml/models/qwen3_0_8b/tokenizer/tokenizer_analysis.py
-
-# Expand tokenizer with 405 Banglish candidate tokens → 1620 entries (4 variants each)
-conda run -n ML python ml/models/qwen3_0_8b/tokenizer/expand_tokenizer.py
-```
-
-Output: `ml/models/qwen3_0_8b/tokenizer/banglish_tokenizer/` (249,697 vocab, up from 248,077). Banglish token efficiency improved ~18.4%. Each source token gets 4 variants: lowercase/capitalized × bare/leading-space, because Qwen is space-aware and phone autocorrect capitalizes sentence-start words.
-
-### Phase 3 — Embedding Warmup / Continued Pretraining (COMPLETE: 500 steps)
-
-```bash
-# Dry-run to validate dataset blocks (no GPU needed)
-conda run -n ML python ml/models/qwen3_0_8b/training/continue_pretrain.py --dataset-only
-
-# Quick smoke test on GPU
-conda run -n ML python ml/models/qwen3_0_8b/training/continue_pretrain.py \
-  --output-dir ml/models/qwen3_0_8b/training/warmup_test \
-  --block-size 256 --batch-size 1 --grad-accum 8 --max-steps 20 --save-every 20
-
-# Full warmup run (uses defaults pointing to correct paths)
-conda run -n ML python ml/models/qwen3_0_8b/training/continue_pretrain.py
-```
-
-Freezes all base model weights; trains only the embedding/LM-head rows for added tokens. Output at `ml/models/qwen3_0_8b/training/banglish_embedding_warmup/` (checkpoints at 100/200/300/400/500 steps, ~1.5 GB).
-
-### Phase 4 — SFT with LoRA (NEXT: script ready, not yet run)
-
-```bash
-conda run -n ML python ml/models/qwen3_0_8b/training/sft.py
-```
-
-Loads from `banglish_embedding_warmup/`, applies LoRA (r=16, alpha=32) to all attention+MLP projections, trains 3 epochs on `synthetic_dataset_chatml.jsonl`, saves adapter to `sft_lora_final/`.
-
-### Phase 5 — Evaluation & Quantization (TODO)
-
-No evaluation script exists yet. Metrics: valid JSON rate, exact transaction count match, amount accuracy, category accuracy per language, Banglish-only accuracy. After eval, quantize to GGUF or llama.cpp for mobile.
+Candidate models (`ml/hishab/registry.py`): Qwen3.5-0.8B, LFM2.5-350M, LFM2.5-1.2B,
+Gemma-3-270M. All are verified to run in kiln.
 
 ## Critical Invariants
 
-**The expanded tokenizer must travel with the model.** Any script that loads the warmed model or SFT adapter must use `ml/models/qwen3_0_8b/tokenizer/banglish_tokenizer/` (or a model dir that contains it).
+**Chat-template parity.** `train.py` asserts the generation prompt is a prefix of the fully
+rendered training example. Qwen3.5 is trained and served with thinking off
+(`<think>\n\n</think>\n\n` in the assistant turn); llama.cpp's `--jinja` default matches.
 
-**`resize_token_embeddings` is mandatory.** A freshly downloaded `Qwen/Qwen3.5-0.8B` cannot use the expanded tokenizer without `model.resize_token_embeddings(len(expanded_tokenizer))`. The warmup script handles this; any new script loading the base model must too.
+**Never evaluate on training rows.** Use `ml/datasets/splits/test.jsonl` only.
 
-**New tokens need training.** The expanded tokenizer alone reduces token count but added embedding rows have no semantic meaning until after embedding warmup.
-
-**GGUF export compatibility.** Before quantizing, verify that added tokens survive conversion — llama.cpp and mobile runtimes may not handle `AddedToken` entries identically.
+**Transformers 5 tokenizer files.** `tokenizer_config.json` written by transformers 5 says
+`TokenizersBackend`; the GGUF image uses transformers 5 too, with a fallback that rewrites it
+to `PreTrainedTokenizerFast` for the converter.
 
 ## Key Artifacts
 
 | Path | Description |
 |------|-------------|
-| `ml/datasets/synthetic_dataset.jsonl` | 5000-row SFT dataset with metadata (language, complexity, categories) |
-| `ml/datasets/synthetic_dataset_chatml.jsonl` | Same 5000 rows in pure ChatML format — used directly for SFT |
-| `ml/datasets/gemma_pruning_corpus_50mb.txt` | ~51 MB mixed Banglish/Bangla/English corpus for embedding warmup |
-| `ml/models/qwen3_0_8b/tokenizer/added_tokens.txt` | 405 source Banglish candidate tokens |
-| `ml/models/qwen3_0_8b/tokenizer/banglish_tokenizer/` | Expanded tokenizer (249,697 vocab) |
-| `ml/models/qwen3_0_8b/training/banglish_embedding_warmup/` | Warmed model after 500 steps (~1.5 GB, gitignored) |
-| `ml/models/qwen3_0_8b/training/sft_lora/` | SFT LoRA output — empty until Phase 4 runs (gitignored) |
-| `HANDOFF.md` | Detailed session history and design decisions |
+| `ml/datasets/synthetic_dataset.jsonl` | 5200 raw rows with metadata (lang, complexity, generator) |
+| `ml/datasets/splits/` | clean train / validation / test (+ stats.json) |
+| Modal volume `hishab-data` | `/splits` mirror of the above |
+| Modal volume `hishab-runs` | `/runs/<model>__<fmt>__<tune>/{adapter,merged,gguf,eval_hf.json,eval_gguf/}` |
+| HF `ryuma007/hishab-synthetic-v2` | old dataset (leaky validation split) |
+| HF `ryuma007/qwen3.5-0.8b-hishab-synthetic-v2[-Q4_K_M-GGUF]` | first published model (notebook pipeline, vanilla tokenizer) |
 
 ## Backend App
 
