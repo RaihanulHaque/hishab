@@ -1,58 +1,20 @@
 # Hishab fine-tune results
 
-## Recommendation (2026-10-15)
-
-**Ship candidate: `qwen3.5-0.8b__json__lora` at Q4_K_M with imatrix (529 MB).** It is the most
-accurate model at every precision, loses nothing from bf16 to 4-bit (85.5% exact as F16 and as
-Q4_K_M-imat on the 518-row held-out test), and `json` output is the shortest (about 49 tokens),
-so it is also the fastest to finish on the phone among the accurate models. Banglish is its
-weakest language at about 82%, bangla 90%, english 94%.
-
-**Fast tier for low-end phones: `lfm2.5-350m__two_phase__lora` at Q5_K_M (260 MB) or Q4_K_M
-(229 MB).** About 81% exact at twice the output length; kiln measured LFM2.5-350M Q4_K_M at
-90 tok/s on a Pixel 8 against 37 tok/s for Qwen3.5-0.8B Q4_K_M, so wall time per message is
-similar once the longer two_phase output is accounted for. The 350M model is fragile below 5
-bits: Q4_K_M-imat / Q4_0 lose 4 to 10 points.
-
-**Quality ceiling if size does not matter: `lfm2.5-1.2b__two_phase__lora` at IQ3_M-imat
-(567 MB, 84.7%) or Q4_K_M (731 MB, 85.5%).** It is the most quantization-robust model tested but
-never beats Qwen3.5-0.8B at the same size.
-
-Gemma-3-270M (about 82% as F16, 253 MB at Q4_K_M-imat for 79.7%) is the smallest option; plain
-Q4_0 collapses it to 50 to 62% so never ship it at Q4_0.
-
-Format: `two_phase` (English translation before the JSON) helps the sub-500M models by 1 to 3
-points and hurts nothing, but doubles output tokens; Qwen3.5-0.8B does not need it.
-
-| run | quant | MB | exact | banglish exact | valid JSON | avg out tokens |
-|---|---|---|---|---|---|---|
-| qwen3.5-0.8b__json__lora | Q4_K_M-imat | 529 | 85.5 | 80.4 | 100.0 | 48.2 |
-| qwen3.5-0.8b__json__lora | Q6_K | 630 | 85.7 | 81.7 | 100.0 | 48.2 |
-| qwen3.5-0.8b__json__lora | Q8_0 | 812 | 85.5 | 81.7 | 100.0 | 48.1 |
-| lfm2.5-1.2b__two_phase__lora | IQ3_M-imat | 567 | 84.7 | 79.9 | 99.8 | 91.0 |
-| lfm2.5-1.2b__two_phase__lora | Q4_K_M | 731 | 85.5 | 80.8 | 100.0 | 90.9 |
-| lfm2.5-350m__two_phase__lora | Q5_K_M | 260 | 81.5 | 74.9 | 100.0 | 90.2 |
-| lfm2.5-350m__two_phase__lora | Q4_K_M | 229 | 80.7 | 75.8 | 99.6 | 92.4 |
-| lfm2.5-350m__json__lora | Q4_K_M-imat | 229 | 79.2 | 74.4 | 100.0 | 59.7 |
-| gemma-3-270m__json__lora | Q6_K | 283 | 81.9 | 71.2 | 100.0 | 45.8 |
-| gemma-3-270m__json__lora | Q4_K_M-imat | 253 | 79.7 | 68.5 | 100.0 | 45.7 |
-
-Caveats: all numbers are on synthetic Gemini-generated data (no real user messages yet);
-llama.cpp tok/s in the tables below is from a shared 16-core x86 container with 8 parallel
-slots and is only useful relatively. Qwen3.5-0.8B drops about 2 points going from HF bf16 to
-the F16 GGUF (87.6 to 85.5), the other models reproduce within 1 point.
-
 Held-out **test** split (518 rows) unless noted. exact = multiset of (amount, category, type) equals gold. F1 = micro F1 over those tuples.
 
 ## Full-precision models (bf16, HF transformers, greedy)
 
 | run | base | fmt | tune | best val loss | valid JSON | exact | F1 | cat acc | type acc | banglish exact | bangla exact | english exact | mixed exact | avg out tok | train min |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| qwen3.5-0.8b__json__lora__v4 | Qwen/Qwen3.5-0.8B | json | lora | 0.099 | 100.0 | **87.8** | 93.4 | 95.3 | 99.1 | 82.6 | 88.0 | 94.9 | 93.3 | 48.9 | 61 |
 | qwen3.5-0.8b__json__lora | Qwen/Qwen3.5-0.8B | json | lora | 0.095 | 100.0 | **87.6** | 92.9 | 95.0 | 98.9 | 81.7 | 90.4 | 93.9 | 92.0 | 48.8 | 32 |
 | qwen3.5-0.8b__two_phase__lora | Qwen/Qwen3.5-0.8B | two_phase | lora | 0.161 | 100.0 | **86.7** | 92.4 | 94.4 | 98.7 | 81.3 | 87.2 | 92.9 | 93.3 | 81.9 | 35 |
+| qwen3.5-0.8b__two_phase__lora__v4 | Qwen/Qwen3.5-0.8B | two_phase | lora | 0.161 | 100.0 | **86.7** | 92.6 | 94.6 | 99.0 | 80.4 | 88.8 | 94.9 | 90.7 | 81.7 | 96 |
 | lfm2.5-1.2b__two_phase__lora | LiquidAI/LFM2.5-1.2B-Instruct | two_phase | lora | 0.160 | 100.0 | **85.7** | 92.2 | 93.9 | 99.2 | 80.8 | 84.0 | 93.9 | 92.0 | 90.1 | 11 |
+| lfm2.5-350m__two_phase__lora__v4 | LiquidAI/LFM2.5-350M | two_phase | lora | 0.186 | 100.0 | **84.2** | 91.0 | 94.0 | 98.4 | 76.3 | 85.6 | 93.9 | 92.0 | 88.4 | 10 |
 | lfm2.5-350m__two_phase__lora | LiquidAI/LFM2.5-350M | two_phase | lora | 0.191 | 100.0 | **83.0** | 90.2 | 93.7 | 97.9 | 74.4 | 84.8 | 92.9 | 92.0 | 89.8 | 6 |
 | lfm2.5-1.2b__json__lora | LiquidAI/LFM2.5-1.2B-Instruct | json | lora | 0.092 | 99.8 | **82.4** | 89.8 | 92.7 | 97.5 | 75.3 | 84.8 | 96.0 | 81.3 | 61.1 | 10 |
+| lfm2.5-350m__json__lora__v4 | LiquidAI/LFM2.5-350M | json | lora | 0.098 | 100.0 | **82.2** | 90.4 | 93.3 | 98.2 | 77.2 | 82.4 | 93.9 | 81.3 | 59.9 | 9 |
 | gemma-3-270m__two_phase__lora | unsloth/gemma-3-270m-it | two_phase | lora | 0.227 | 100.0 | **81.9** | 89.6 | 93.3 | 98.0 | 73.5 | 84.8 | 90.9 | 89.3 | 78.9 | 7 |
 | gemma-3-270m__json__lora | unsloth/gemma-3-270m-it | json | lora | 0.123 | 100.0 | **81.7** | 89.6 | 92.6 | 97.5 | 69.9 | 87.2 | 92.9 | 92.0 | 45.9 | 5 |
 | lfm2.5-350m__json__lora | LiquidAI/LFM2.5-350M | json | lora | 0.098 | 100.0 | **81.5** | 89.5 | 93.0 | 97.5 | 74.9 | 84.0 | 91.9 | 82.7 | 59.8 | 5 |
@@ -116,6 +78,14 @@ Held-out **test** split (518 rows) unless noted. exact = multiset of (amount, ca
 | lfm2.5-350m__two_phase__lora | Q4_0 | 219 | 99.8 | **68.9** | 81.0 | 66.2 | 0 | 57.0 |
 | lfm2.5-350m__two_phase__lora | Q3_K_M-imat | 193 | 99.6 | **66.0** | 78.6 | 70.3 | 0 | 37.6 |
 | lfm2.5-350m__two_phase__lora | IQ3_M-imat | 184 | 100.0 | **65.3** | 77.8 | 72.6 | 0 | 26.0 |
+| lfm2.5-350m__two_phase__lora__v4 | F16 | 711 | 100.0 | **84.7** | 91.3 | 78.1 | 0 | 32.2 |
+| lfm2.5-350m__two_phase__lora__v4 | Q5_K_M | 260 | 100.0 | **84.7** | 91.4 | 77.6 | 0 | 46.3 |
+| lfm2.5-350m__two_phase__lora__v4 | Q8_0 | 379 | 100.0 | **84.6** | 91.4 | 77.2 | 0 | 56.5 |
+| lfm2.5-350m__two_phase__lora__v4 | Q6_K | 293 | 100.0 | **84.0** | 91.1 | 78.5 | 0 | 45.9 |
+| lfm2.5-350m__two_phase__lora__v4 | Q4_K_M | 229 | 100.0 | **82.8** | 90.1 | 77.6 | 0 | 36.4 |
+| lfm2.5-350m__two_phase__lora__v4 | Q4_K_M-imat | 229 | 100.0 | **82.6** | 90.3 | 77.2 | 0 | 52.1 |
+| lfm2.5-350m__two_phase__lora__v4 | Q4_0-imat | 220 | 100.0 | **80.3** | 88.6 | 75.3 | 0 | 37.0 |
+| lfm2.5-350m__two_phase__lora__v4 | IQ3_M-imat | 184 | 100.0 | **68.1** | 81.9 | 76.3 | 0 | 31.1 |
 | qwen3.5-0.8b__json__lora | Q6_K | 630 | 100.0 | **85.7** | 92.1 | 81.7 | 0 | 16.2 |
 | qwen3.5-0.8b__json__lora | F16 | 1517 | 100.0 | **85.5** | 92.1 | 82.2 | 0 | 9.6 |
 | qwen3.5-0.8b__json__lora | Q4_K_M-imat | 529 | 100.0 | **85.5** | 91.9 | 80.4 | 0 | 17.7 |
@@ -127,6 +97,14 @@ Held-out **test** split (518 rows) unless noted. exact = multiset of (amount, ca
 | qwen3.5-0.8b__json__lora | IQ4_XS-imat | 504 | 100.0 | **83.2** | 90.7 | 79.0 | 0 | 16.9 |
 | qwen3.5-0.8b__json__lora | IQ3_M-imat | 454 | 99.8 | **80.3** | 88.0 | 75.8 | 0 | 14.5 |
 | qwen3.5-0.8b__json__lora | Q3_K_M-imat | 466 | 99.8 | **80.1** | 88.8 | 74.9 | 0 | 16.3 |
+| qwen3.5-0.8b__json__lora__v4 | Q5_K_M | 578 | 100.0 | **86.7** | 92.7 | 83.6 | 0 | 15.5 |
+| qwen3.5-0.8b__json__lora__v4 | F16 | 1517 | 100.0 | **86.5** | 92.7 | 82.6 | 0 | 16.2 |
+| qwen3.5-0.8b__json__lora__v4 | Q6_K | 630 | 100.0 | **85.9** | 92.3 | 83.1 | 0 | 14.7 |
+| qwen3.5-0.8b__json__lora__v4 | Q8_0 | 812 | 100.0 | **85.5** | 92.1 | 82.6 | 0 | 16.4 |
+| qwen3.5-0.8b__json__lora__v4 | Q4_K_M-imat | 529 | 100.0 | **85.1** | 91.7 | 82.6 | 0 | 17.7 |
+| qwen3.5-0.8b__json__lora__v4 | Q4_0-imat | 502 | 100.0 | **84.0** | 91.2 | 80.8 | 0 | 16.7 |
+| qwen3.5-0.8b__json__lora__v4 | Q4_K_M | 529 | 99.8 | **82.2** | 89.9 | 80.8 | 0 | 12.8 |
+| qwen3.5-0.8b__json__lora__v4 | IQ3_M-imat | 454 | 99.8 | **81.5** | 89.8 | 79.9 | 0 | 14.8 |
 | qwen3.5-0.8b__two_phase__lora | F16 | 1517 | 100.0 | **85.5** | 91.8 | 81.3 | 0 | 17.4 |
 | qwen3.5-0.8b__two_phase__lora | Q6_K | 630 | 100.0 | **85.3** | 91.6 | 80.8 | 0 | 17.1 |
 | qwen3.5-0.8b__two_phase__lora | IQ4_XS-imat | 504 | 100.0 | **85.1** | 91.5 | 79.9 | 0 | 15.2 |

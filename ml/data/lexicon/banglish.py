@@ -174,3 +174,26 @@ NO_TX = [
     "ami ki ki kharach korsi mone nai", "bkash e taka nai, kal pathabo", "kal tuition er beton pabo", "porikkha ache tai bashay",
     "Shob bill next week e dibo", "net er bill ekhono dei nai", "ammu bollo bazar korte, kori nai", "dhar ta kal ferot dibo",
 ]
+
+# Spelled-out numbers. Real messages write "ponero hajar" / "পনেরো হাজার" / "dui lakh";
+# the v4 Qwen model read "পনেরো হাজার" as 7000, so the generator now emits these too.
+NUM_WORDS_BN = {
+    1: "এক", 2: "দুই", 3: "তিন", 4: "চার", 5: "পাঁচ", 6: "ছয়", 7: "সাত", 8: "আট", 9: "নয়", 10: "দশ",
+    11: "এগারো", 12: "বারো", 13: "তেরো", 14: "চৌদ্দ", 15: "পনেরো", 16: "ষোলো", 17: "সতেরো", 18: "আঠারো",
+    19: "উনিশ", 20: "বিশ", 25: "পঁচিশ", 30: "ত্রিশ", 35: "পঁয়ত্রিশ", 40: "চল্লিশ", 45: "পঁয়তাল্লিশ", 50: "পঞ্চাশ",
+    60: "ষাট", 70: "সত্তর", 75: "পঁচাত্তর", 80: "আশি", 90: "নব্বই", 100: "একশ", 150: "দেড়শ", 200: "দুইশ",
+    250: "আড়াইশ", 300: "তিনশ", 400: "চারশ", 500: "পাঁচশ", 600: "ছয়শ", 700: "সাতশ", 800: "আটশ", 900: "নয়শ",
+}
+NUM_WORDS_ROMAN = {
+    1: ["ek"], 2: ["dui"], 3: ["tin"], 4: ["char"], 5: ["pach", "panch"], 6: ["choy", "chhoy"], 7: ["sat"],
+    8: ["at", "aat"], 9: ["noy"], 10: ["dosh"], 11: ["egaro"], 12: ["baro"], 13: ["tero"], 14: ["chouddo"],
+    15: ["ponero", "pnero"], 16: ["sholo"], 17: ["sotero"], 18: ["atharo"], 19: ["unish"], 20: ["bish", "bis"],
+    25: ["pochish"], 30: ["trish", "tirish"], 35: ["poytrish"], 40: ["chollish"], 45: ["poytallish"],
+    50: ["ponchash", "pochash"], 60: ["shat"], 70: ["sottor"], 75: ["pochattor"], 80: ["ashi"], 90: ["nobboi"],
+    100: ["eksho", "ek sho"], 150: ["dersho", "der sho"], 200: ["duisho", "dui sho"], 250: ["araisho", "arai sho"],
+    300: ["tinsho"], 400: ["charsho"], 500: ["pachsho", "panch sho"], 600: ["choysho"], 700: ["satsho"],
+    800: ["atsho"], 900: ["noysho"],
+}
+# "dersho"=150, "arai hajar"=2500, "der lakh"=150000 style fractions.
+FRACTION_WORDS = {1.5: (["der"], "দেড়"), 2.5: (["arai", "aarai"], "আড়াই"), 3.5: (["sare tin"], "সাড়ে তিন"),
+                  4.5: (["sare char"], "সাড়ে চার"), 5.5: (["sare pach"], "সাড়ে পাঁচ"), 7.5: (["sare sat"], "সাড়ে সাত")}

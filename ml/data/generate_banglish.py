@@ -52,9 +52,38 @@ def nice_amount(rng: random.Random, lo: int, hi: int) -> int:
     return int(a)
 
 
+def spelled_amount(rng: random.Random, a: int, lang: str) -> list[str]:
+    """'ponero hajar' / 'পনেরো হাজার' / 'der lakh' renderings of a, or [] if a has no short form."""
+    out: list[str] = []
+    for unit, roman_u, bn_u in ((100000, ["lakh", "lac", "lokkho"], "লাখ"), (1000, ["hajar", "hazar"], "হাজার")):
+        if a >= unit and a % unit == 0 and (a // unit) in L.NUM_WORDS_ROMAN:
+            n = a // unit
+            out += [f"{w} {u}" for w in L.NUM_WORDS_ROMAN[n] for u in roman_u]
+            if lang in ("bangla", "mixed"):
+                out += [f"{L.NUM_WORDS_BN[n]} {bn_u}"]
+            break
+        frac = a / unit
+        if a >= unit and frac in L.FRACTION_WORDS:
+            roman_f, bn_f = L.FRACTION_WORDS[frac]
+            out += [f"{w} {u}" for w in roman_f for u in roman_u]
+            if lang in ("bangla", "mixed"):
+                out += [f"{bn_f} {bn_u}"]
+            break
+    if not out and a in L.NUM_WORDS_ROMAN and a >= 100:
+        out += list(L.NUM_WORDS_ROMAN[a])
+        if lang in ("bangla", "mixed"):
+            out += [L.NUM_WORDS_BN[a]]
+    if lang != "bangla":
+        out = [f"{w} taka" if rng.random() < 0.5 else w for w in out]
+    return out
+
+
 def render_amount(rng: random.Random, a: int, lang: str) -> str:
     """Many ways to write the same number; all map back to float(a)."""
     forms = [str(a), str(a)]
+    spelled = spelled_amount(rng, a, lang)
+    if spelled and rng.random() < 0.25:
+        return rng.choice(spelled)
     if lang != "bangla":
         forms += [f"{a}{rng.choice(L.CURRENCY)}"]
     if a >= 1000 and a % 100 == 0:
