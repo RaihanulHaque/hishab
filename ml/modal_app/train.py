@@ -204,8 +204,23 @@ def train(
         processing_class=tokenizer,
         peft_config=peft_config,
     )
+
+    # Modal can preempt the container and restart the function from scratch. Checkpoints are
+    # written per epoch, so commit the volume after each one and resume from the newest on a
+    # restart instead of losing the whole run.
+    from transformers import TrainerCallback
+
+    class _CommitEachEpoch(TrainerCallback):
+        def on_save(self, args_, state, control, **kwargs):
+            VOLUMES[RUNS_DIR].commit()
+
+    trainer.add_callback(_CommitEachEpoch())
+    ckpts = sorted((out_dir / "checkpoints").glob("checkpoint-*"), key=lambda p: int(p.name.split("-")[-1]))
+    resume = str(ckpts[-1]) if ckpts and (ckpts[-1] / "trainer_state.json").exists() else None
+    if resume:
+        print(f"### resuming from {resume}")
     t0 = time.time()
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume)
     train_time = time.time() - t0
     (out_dir / "train_log.json").write_text(json.dumps(trainer.state.log_history, indent=1))
 
