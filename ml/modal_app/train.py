@@ -34,6 +34,18 @@ def load_split(name: str) -> list[dict]:
     return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
+def eval_splits(eval_limit: int = 0) -> dict[str, list[dict]]:
+    """validation + test, plus any extra held-out slices present in /splits (numbers.jsonl:
+    digit-free spelled amounts, never trained on)."""
+    out = {"validation": load_split("validation"), "test": load_split("test")}
+    for extra in ("numbers",):
+        if (Path(DATA_DIR) / "splits" / f"{extra}.jsonl").exists():
+            out[extra] = load_split(extra)
+    if eval_limit:
+        out = {k: v[:eval_limit] for k, v in out.items()}
+    return out
+
+
 def to_prompt_completion(rows: list[dict], fmt: str) -> list[dict]:
     from hishab.prompts import build_messages
     from hishab.schema import render_target
@@ -226,7 +238,7 @@ def train(
         "template": template_info,
         "splits": {},
     }
-    run_eval(model, tokenizer, name, fmt, out_dir, results, {"validation": val_rows, "test": test_rows},
+    run_eval(model, tokenizer, name, fmt, out_dir, results, eval_splits(eval_limit),
              spec.get("eval_batch_size", 32))
     VOLUMES[RUNS_DIR].commit()
     return results
@@ -264,10 +276,7 @@ def eval_hf(run: str, eval_limit: int = 0) -> dict:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(str(out_dir / "merged"), dtype=torch.bfloat16, device_map="cuda").eval()
-    val_rows, test_rows = load_split("validation"), load_split("test")
-    if eval_limit:
-        val_rows, test_rows = val_rows[:eval_limit], test_rows[:eval_limit]
-    run_eval(model, tokenizer, run, results["fmt"], out_dir, results, {"validation": val_rows, "test": test_rows},
+    run_eval(model, tokenizer, run, results["fmt"], out_dir, results, eval_splits(eval_limit),
              spec.get("eval_batch_size", 32))
     VOLUMES[RUNS_DIR].commit()
     return results
