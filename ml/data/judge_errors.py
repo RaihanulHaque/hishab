@@ -61,15 +61,24 @@ ITEMS
 """
 
 
-def run_codex(prompt: str, timeout: int = 900) -> list[dict]:
+def run_codex(prompt: str, timeout: int = 1800) -> list[dict]:
+    import time
+    t0 = time.time()
     with tempfile.TemporaryDirectory() as d:
         out = Path(d) / "out.txt"
-        subprocess.run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out), prompt],
-                       cwd=d, capture_output=True, text=True, timeout=timeout)
+        try:
+            r = subprocess.run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out), prompt],
+                               cwd=d, capture_output=True, text=True, timeout=timeout)
+            err = r.stderr[-300:]
+        except subprocess.TimeoutExpired:
+            print(f"  codex timed out after {timeout}s", flush=True)
+            return []
         text = out.read_text() if out.exists() else ""
     m = re.search(r"\[.*\]", text, re.S)
     if not m:
+        print(f"  no JSON in codex output after {time.time() - t0:.0f}s; stderr: {err!r}", flush=True)
         return []
+    print(f"  codex replied in {time.time() - t0:.0f}s", flush=True)
     try:
         arr = json.loads(m.group(0))
     except json.JSONDecodeError:
@@ -81,7 +90,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--preds", type=Path, nargs="+", required=True)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--batch", type=int, default=32)
+    ap.add_argument("--batch", type=int, default=16)
     args = ap.parse_args()
 
     rows = [r for p in args.preds for r in disagreements(p)]

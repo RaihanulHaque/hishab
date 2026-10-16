@@ -103,7 +103,7 @@ def make_ggufs(run: str, quants: list[str], force: bool = False) -> dict:
         ]
         calib.write_text("\n".join(texts), encoding="utf-8")
     imatrix = gdir / "imatrix.gguf"
-    if any(q.endswith("-imat") for q in quants) and not imatrix.exists():
+    if any("-imat" in q for q in quants) and not imatrix.exists():
         _run([BIN / "llama-imatrix", "-m", f16, "-f", calib, "-c", "512", "--chunks", "200", "-t", "16", "-o", imatrix])
 
     sizes = {"F16": f16.stat().st_size}
@@ -112,10 +112,15 @@ def make_ggufs(run: str, quants: list[str], force: bool = False) -> dict:
             continue
         out = gdir / f"{run}-{q}.gguf"
         if not out.exists():
-            base = q.removesuffix("-imat")
+            # "-e8": keep token embeddings and the output head at Q8_0; rare tokens (Bangla
+            # number words) lose the most under quantization and live in those two tensors.
+            e8 = q.endswith("-e8")
+            base = q.removesuffix("-e8").removesuffix("-imat")
             cmd = [BIN / "llama-quantize"]
-            if q.endswith("-imat"):
+            if "-imat" in q:
                 cmd += ["--imatrix", imatrix]
+            if e8:
+                cmd += ["--token-embedding-type", "q8_0", "--output-tensor-type", "q8_0"]
             cmd += [f16, out, base, "16"]
             _run(cmd)
         sizes[q] = out.stat().st_size
