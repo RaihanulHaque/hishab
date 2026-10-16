@@ -4,7 +4,7 @@ Every training version of the shipping model line: Qwen3.5-0.8B, `json` output. 
 this file records the data, the training setup, every score we have, the error breakdown and
 what we learned. `RESULTS.md` has the other base models (LFM2.5, Gemma) and `two_phase` runs.
 
-Last updated 2026-10-17 03:00. v8 trained; its GGUF sweep is running.
+Last updated 2026-10-17 03:40. Overnight pipeline finished.
 
 ## How to read the numbers
 
@@ -34,7 +34,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v5 | 9,564 | **88.2** | **86.5** | 13.4 | n/a | 6/20 | **shipped in hishab_offline** |
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
-| v8 | 20,333 | **89.6** | sweep running | **84.9** | sweep running | pending | full fine-tune; best at full precision |
+| v8 | 20,333 | **89.6** | **89.2** | **84.9** | **80.1** | **18/20** | **full fine-tune; best everywhere, ship candidate** |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -148,14 +148,16 @@ Test set:
 | v4 | 86.5 | 85.5 | 85.9 | **86.7** | 85.1 | 82.2 | 84.0 | | | 81.5 |
 | v5 | **86.7** | 86.1 | 86.5 | 85.1 | 84.6 | | 84.0 | | | |
 | v6 | | 84.7 | 84.4 | 84.6 | 83.6 | | | | | |
-| v7 | | | **86.1** | 84.6 | 84.6 | | | | | |
+| v7 | | | 86.1 | 84.6 | 84.6 | | | | | |
+| v8 | | | **89.2** | **88.2** | **88.6** | | | | | |
 
 Numbers set:
 
 | version | BF16 | F16 | Q8_0 | Q6_K | Q5_K_M | Q4_K_M-imat |
 |---|---|---|---|---|---|---|
 | v6 | 76.2 | 75.9 | **76.8** | 73.9 | 73.9 | 73.1 |
-| v7 | | | | **73.9** | 72.3 | 74.5 |
+| v7 | | | | 73.9 | 72.3 | 74.5 |
+| v8 | | | | **80.1** | **80.7** | **80.1** |
 
 File sizes: F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
 Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and output at Q8_0, add
@@ -170,37 +172,48 @@ Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and outpu
 | v6 | Q6_K GGUF | 78.5 | **52.8** | 86.7 | 82.4 |
 | v7 | bf16 on HF | 75.8 | 74.2 | 82.2 | 82.4 |
 | v7 | Q6_K GGUF | 75.8 | 56.2 | 84.4 | 85.1 |
+| v8 | bf16 on HF | 81.9 | **86.5** | 88.9 | 86.5 |
+| v8 | Q6_K GGUF | 81.2 | **70.8** | 88.9 | 83.8 |
 
 Banglish is the same on both paths. Bangla drops about 17 points even in BF16 GGUF, which has the
 same weights as HF, so the cause is llama.cpp's handling of Qwen3.5 rather than quantization.
 Typical failure: "নয় হাজার পাঁচশো" read as 950. NFC normalisation is applied in the app and the
 eval, but it did not close the gap.
 
+**The tokenizer is not the cause.** llama.cpp's tokenizer (built from kiln's pinned commit) and
+the HF tokenizer produce identical token IDs for all 875 test and numbers messages. The gap
+is in the forward pass. v8 narrows it from about 24 points to 16, but does not remove it.
+
+**A GGUF-only output glitch.** v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows. In each one
+the description contains a number word and the output jumps straight into digits, skipping the
+`","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never
+does this. The app's lenient parser drops such entries, so the user would see a missing line.
+
 ## Phone probes, Q6_K through kiln-cli
 
-| probe | want | v5 | v6 | v7 |
-|---|---|---|---|---|
-| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ |
-| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ |
-| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ |
-| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ |
-| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ |
-| cha khelam chollish taka | 40 | 400 | ✓ | ✓ |
-| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ |
-| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ |
-| eksho bish taka recharge | 120 | 100 | ✓ | ✓ |
-| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 |
-| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ |
-| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** |
-| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ |
-| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ |
-| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ |
-| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ |
-| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 |
-| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ |
-| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ |
-| salary pelam 80k | 80000 | ✓ | ✓ | ✓ |
-| **exact** | | **6/20** | **14/20** | **17/20** |
+| probe | want | v5 | v6 | v7 | v8 |
+|---|---|---|---|---|---|
+| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ |
+| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ |
+| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ |
+| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ |
+| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ |
+| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ |
+| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ |
+| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ |
+| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ |
+| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 |
+| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ |
+| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ |
+| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ |
+| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ |
+| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ |
+| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ |
+| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ |
+| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 |
+| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ |
+| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ |
+| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** |
 
 v7's miss on "ekush hajar taka vara dilam" returns nothing at all. That is a new failure type,
 probably from the no-transaction rows added in v7, and it is worse for a user than a wrong
@@ -249,11 +262,13 @@ category because the entry silently disappears.
 - **Result at full precision:** the best version on every set. Test 89.6, up 1.4 on v5 and 2.9 on v7. Numbers 84.9, up 3.1 on v6. Wrong test messages fell to 54, the fewest of any version.
 - **What improved:** Bangla on test rose to 92.0 and mixed to 97.3. v7's income/expense flips are gone, with type errors on numbers back down from 20 to 7. Count errors on test went back from 15 to 9.
 - **Lesson:** with this much data, updating all weights beats LoRA by a wide margin, even though its validation loss looked worse after epoch 1.
-- **Pending:** GGUF sweep and phone probes.
+- **Phone format:** Q6_K scores 89.2 on test, only 0.4 below bf16, and 80.1 on numbers. That is 3.1 and 6.2 points above any earlier GGUF. Q4_K_M-imat, at 529 MB, scores 88.6 and 80.1, so the smaller file is nearly as good.
+- **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat, the best of any version. Q6_K's two misses are "bish hajar pachsho" read as 25000 and "সাড়ে তিন হাজার" split into two entries. Q4_K_M-imat's misses are 25000 again and 21000 read as 12000.
+- **Verdict:** v8 Q6_K is the ship candidate. It beats the shipped v5 on test (89.2 vs 86.5) and fixes spelled-out numbers (80.1 at Q6_K, against v5's 13.4 even at full precision).
 
 ## Open problems
 
 1. **Label noise in `test`.** Category is two-thirds of every version's errors. 128 disagreement rows need judging against the guideline; the Codex judge stalled on quota.
-2. **GGUF Bangla gap.** About 17 to 24 points lost on Bangla-script number messages in llama.cpp at every precision. This is a kiln or llama.cpp issue, not a training one.
-3. **Dropped entries.** v7 sometimes returns `[]` or drops a middle item. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
+2. **GGUF Bangla gap.** 16 to 24 points lost on Bangla-script number messages in llama.cpp at every precision, BF16 included. Tokenization is identical, so the difference is in llama.cpp's Qwen3.5 forward pass. Worth a kiln issue with a minimal repro comparing per-layer outputs.
+3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
 4. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
