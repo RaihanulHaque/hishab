@@ -61,13 +61,13 @@ ITEMS
 """
 
 
-def run_codex(prompt: str, timeout: int = 1800) -> list[dict]:
+def run_codex(prompt: str, timeout: int = 150) -> list[dict]:
     import time
     t0 = time.time()
     with tempfile.TemporaryDirectory() as d:
         out = Path(d) / "out.txt"
         try:
-            r = subprocess.run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out), prompt],
+            r = subprocess.run(["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-c", 'model_reasoning_effort="low"', "-o", str(out), prompt],
                                cwd=d, capture_output=True, text=True, timeout=timeout)
             err = r.stderr[-300:]
         except subprocess.TimeoutExpired:
@@ -90,7 +90,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--preds", type=Path, nargs="+", required=True)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--batch", type=int, default=8)
     args = ap.parse_args()
 
     rows = [r for p in args.preds for r in disagreements(p)]

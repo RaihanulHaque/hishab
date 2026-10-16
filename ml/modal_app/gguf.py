@@ -111,6 +111,12 @@ def make_ggufs(run: str, quants: list[str], force: bool = False) -> dict:
         if q == "F16":
             continue
         out = gdir / f"{run}-{q}.gguf"
+        if q == "BF16":
+            # a second unquantized file: isolates f16 numerics from the inference path itself
+            if not out.exists():
+                _run([sys.executable, LLAMA / "convert_hf_to_gguf.py", run_dir / "merged", "--outtype", "bf16", "--outfile", out])
+            sizes[q] = out.stat().st_size
+            continue
         if not out.exists():
             # "-e8": keep token embeddings and the output head at Q8_0; rare tokens (Bangla
             # number words) lose the most under quantization and live in those two tensors.
