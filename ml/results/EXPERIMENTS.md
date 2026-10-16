@@ -4,7 +4,7 @@ Every training version of the shipping model line: Qwen3.5-0.8B, `json` output. 
 this file records the data, the training setup, every score we have, the error breakdown and
 what we learned. `RESULTS.md` has the other base models (LFM2.5, Gemma) and `two_phase` runs.
 
-Last updated 2026-10-17 01:57, with v8 at 46%.
+Last updated 2026-10-17 03:00. v8 trained; its GGUF sweep is running.
 
 ## How to read the numbers
 
@@ -34,7 +34,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v5 | 9,564 | **88.2** | **86.5** | 13.4 | n/a | 6/20 | **shipped in hishab_offline** |
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
-| v8 | 20,333 | running | | | | | full fine-tune, 3 epochs |
+| v8 | 20,333 | **89.6** | sweep running | **84.9** | sweep running | pending | full fine-tune; best at full precision |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -54,6 +54,7 @@ epoch by validation loss is kept.
 | v5 | 4 | 3 | 0.0954 | .1138 / .0982 / .0954 / .1064 | 0.014 | 43 min |
 | v6 | 5 | 2 | 0.1089 | .1153 / .1089 / .1137 / .1256 / .1410 | 0.002 | 103 min |
 | v7 | 4 of 5 | 2 | 0.1076 | .1121 / .1076 / .1119 / .1231 | 0.007 | preempted, see v7 |
+| v8 (full, lr 3e-5) | 3 | 2 | 0.1112 | .1254 / .1112 / .1213 | 0.007 | 104 min |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
 falling. More than 3 epochs is overfitting on this data.
@@ -98,7 +99,8 @@ Transactions per message in train:
 | v4 | 87.8 | 93.4 | 98.3 | 97.3 | 95.3 | 99.1 | 82.6 | 88.0 | 94.9 | 93.3 |
 | v5 | **88.2** | **93.4** | 98.3 | 97.7 | 94.8 | **99.4** | **83.6** | 88.0 | 93.9 | **94.7** |
 | v6 | 85.7 | 92.3 | 98.3 | 97.7 | 93.9 | 98.9 | 80.4 | 84.0 | 93.9 | 93.3 |
-| v7 | 86.7 | 93.0 | 97.1 | 96.3 | **95.3** | 98.9 | 79.0 | 89.6 | 93.9 | **94.7** |
+| v7 | 86.7 | 93.0 | 97.1 | 96.3 | 95.3 | 98.9 | 79.0 | 89.6 | 93.9 | 94.7 |
+| v8 | **89.6** | **94.4** | 98.3 | **98.1** | **95.3** | **99.6** | 83.1 | **92.0** | **94.9** | **97.3** |
 
 Wrong messages by first failing field, out of 518:
 
@@ -109,6 +111,7 @@ Wrong messages by first failing field, out of 518:
 | v5 | 61 | 9 | 3 | 6 | 43 | tuition to other 5, food to shopping 3 |
 | v6 | 74 | 9 | 3 | 10 | 52 | gift to other 6, salary to other 6, food to grocery 5 |
 | v7 | 69 | 15 | 4 | 9 | 41 | salary to other 6, grocery to shopping 4 |
+| v8 | **54** | 9 | 1 | 4 | 40 | entertainment to other 4, tuition to other 4 |
 
 Category is two-thirds of every version's errors, and most of those swaps are cases where the
 Gemini gold disagrees with itself (ERROR_ANALYSIS.md). That is why test exact sits near 86 to 88
@@ -119,8 +122,9 @@ regardless of data.
 | version | exact | F1 | count | amount | category | type | Banglish | Bangla | English | mixed |
 |---|---|---|---|---|---|---|---|---|---|---|
 | v5 | 13.4 | 24.2 | 85.2 | 19.9 | 80.3 | 89.9 | 10.7 | 9.0 | 17.8 | 21.6 |
-| v6 | **81.8** | **87.2** | **100.0** | **99.7** | **88.1** | **98.8** | **79.2** | **76.4** | **88.9** | **89.2** |
+| v6 | 81.8 | 87.2 | **100.0** | **99.7** | 88.1 | **98.8** | 79.2 | 76.4 | **88.9** | **89.2** |
 | v7 | 77.6 | 84.1 | 99.4 | 99.2 | 86.8 | 96.5 | 75.8 | 74.2 | 82.2 | 82.4 |
+| v8 | **84.9** | **89.2** | 99.7 | 98.9 | **90.8** | **98.8** | **81.9** | **86.5** | **88.9** | 86.5 |
 
 Wrong messages by first failing field, out of 357:
 
@@ -129,6 +133,7 @@ Wrong messages by first failing field, out of 357:
 | v5 | 309 | 53 | 233 | 13 | 10 | amounts wrong almost everywhere |
 | v6 | 65 | 0 | 1 | 7 | 57 | gift to shopping 9, gift to other 8 |
 | v7 | 80 | 2 | 1 | 20 | 57 | gift to shopping 8, other to shopping 6, other to tuition 6 |
+| v8 | **54** | 1 | 3 | 7 | 43 | gift to shopping 8, other to shopping 7 |
 
 From v6 on, the model reads spelled-out amounts almost perfectly at full precision. What is left
 is category convention, plus v7's 20 income/expense flips.
@@ -238,12 +243,13 @@ category because the entry silently disappears.
 - **Regressions:** numbers fell to 77.6, with type flips up from 7 to 20. Messages containing "chhoy" (six) or "ashi" (eighty) come out as income. Count errors on test rose from 9 to 15: it drops the middle item of some 3-item messages, and one probe returned nothing.
 - **Fix made:** `train.py` now saves checkpoints every epoch and resumes after a preemption.
 
-### v8: full fine-tune, running
+### v8: full fine-tune
 - **Data:** same as v7.
-- **Training:** all weights instead of LoRA, 3 epochs, best epoch by validation loss. 3,813 steps, about 1 h 45 min, started 01:08.
-- **Progress at 01:57:** step 1,737 of 3,813, no preemption. Epoch-1 validation loss 0.1254, higher than LoRA v7's 0.1121 at the same point.
-- **Goal:** keep v7's test and probe gains without the type flips and dropped entries.
-- **Decision rule:** if v8 is not clearly better than v6 on both test and numbers, the next candidate is a clean LoRA run on v7 data with 3 epochs. That needs approval before any Modal spend.
+- **Training:** all weights instead of LoRA, learning rate 3e-5, 3 epochs, best epoch 2 by validation loss. 3,813 steps in 104 min with no preemption.
+- **Result at full precision:** the best version on every set. Test 89.6, up 1.4 on v5 and 2.9 on v7. Numbers 84.9, up 3.1 on v6. Wrong test messages fell to 54, the fewest of any version.
+- **What improved:** Bangla on test rose to 92.0 and mixed to 97.3. v7's income/expense flips are gone, with type errors on numbers back down from 20 to 7. Count errors on test went back from 15 to 9.
+- **Lesson:** with this much data, updating all weights beats LoRA by a wide margin, even though its validation loss looked worse after epoch 1.
+- **Pending:** GGUF sweep and phone probes.
 
 ## Open problems
 
