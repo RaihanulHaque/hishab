@@ -274,7 +274,7 @@ pipeline_tag: text-generation
 language: [bn, en]
 license: apache-2.0
 tags: [gguf, llama.cpp, finance, banglish, bangla, information-extraction, hishab]
-datasets: [ryuma007/hishab-synthetic-v3]
+datasets: [{dataset}]
 ---
 
 # {repo_name}
@@ -294,18 +294,18 @@ other), `type` (income | expense). An empty array means no transaction.
 {format_note}
 ## Files
 
-Evaluated with llama.cpp (greedy) on the 518-row held-out test split of
-`ryuma007/hishab-synthetic-v3`. *exact* = the set of (amount, category, type) tuples equals the
-gold set.
+Evaluated with llama.cpp (greedy) on held-out splits of `{dataset}`: *test* (518 rows, all four
+languages) and *numbers* (357 rows where every amount is spelled out in words, like "der hajar" or
+"পনেরো হাজার"). *exact* = the set of (amount, category, type) tuples equals the gold set.
 
-| file | size | exact | tuple F1 | valid JSON | banglish exact |
-|---|---|---|---|---|---|
+| file | size | test exact | test tuple F1 | valid JSON | banglish exact | numbers exact |
+|---|---|---|---|---|---|---|
 {rows}
 
 ## Training
 
-LoRA (r=16, alpha=32) on all attention and MLP projections of `{hf_id}` with TRL, 5 epochs,
-lr 2e-4 cosine, completion-only loss, best epoch by validation loss, then merged. Importance
+{training} with TRL, lr {lr:g} cosine, completion-only loss, {train_rows:,} training rows, best epoch
+by validation loss. Importance
 matrices (`-imat` files) were computed on rendered training conversations. Full pipeline and
 all results: https://github.com/RaihanulHaque/hishab (`ml/`).
 
@@ -326,7 +326,7 @@ test set exists.
 """
 
 
-def _render_card(run: str, repo: str, only: list[str] | None) -> tuple[str, list[str]]:
+def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> tuple[str, list[str]]:
     from hishab.prompts import system_prompt
 
     meta = _run_meta(run)
@@ -338,15 +338,16 @@ def _render_card(run: str, repo: str, only: list[str] | None) -> tuple[str, list
         if only and quant not in only:
             continue
         files.append(f.name)
-        ev = edir / f"{quant}.test.json"
+        ev, nv = edir / f"{quant}.test.json", edir / f"{quant}.numbers.json"
+        num = f"{100 * json.loads(nv.read_text())['metrics']['all']['exact_match']:.1f}" if nv.exists() else "-"
         if ev.exists():
             e = json.loads(ev.read_text())
             a = e["metrics"]["all"]
             bl = e["metrics"]["by_language"].get("banglish", {}).get("exact_match")
             rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | {100 * a['exact_match']:.1f} | "
-                        f"{100 * a['tx_f1']:.1f} | {100 * a['valid_json']:.1f} | {100 * bl:.1f} |")
+                        f"{100 * a['tx_f1']:.1f} | {100 * a['valid_json']:.1f} | {100 * bl:.1f} | {num} |")
         else:
-            rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | - | - | - | - |")
+            rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | - | - | - | - | {num} |")
     fmt = meta["fmt"]
     example = ('[{"description":"tuition fee","amount":5000.0,"category":"tuition","type":"expense"},'
                '{"description":"rickshaw","amount":80.0,"category":"transport","type":"expense"},'
@@ -357,19 +358,26 @@ def _render_card(run: str, repo: str, only: list[str] | None) -> tuple[str, list
                 "chain of thought) followed by `JSON:` and the array. Parse everything after `JSON:`.\n")
     else:
         note = "\nThis variant answers with the JSON array only.\n"
-    card = MODEL_CARD.format(hf_id=meta["hf_id"], repo=repo, repo_name=repo.split("/")[-1], example_output=example,
+    if meta.get("tune") == "full":
+        training = f"Full fine-tune (all weights) of `{meta['hf_id']}`, {meta['epochs']:g} epochs"
+    else:
+        training = (f"LoRA (r={meta.get('lora_r', 16)}, alpha={2 * meta.get('lora_r', 16)}) on all attention and MLP "
+                    f"projections of `{meta['hf_id']}`, {meta['epochs']:g} epochs, merged after training")
+    card = MODEL_CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, lr=meta["lr"],
+                             train_rows=meta["train_rows"], repo_name=repo.split("/")[-1], example_output=example,
                              format_note=note, rows="\n".join(rows), first_file=files[0] if files else "<file>",
                              system_prompt=system_prompt(fmt).replace('"', "'"))
     return card, files
 
 
 @app.function(image=gguf_image, cpu=4, timeout=60 * 60, volumes=VOLUMES, secrets=[hf_secret])
-def push_ggufs(run: str, only: list[str] | None = None, repo_prefix: str = "ryuma007/hishab-") -> str:
+def push_ggufs(run: str, only: list[str] | None = None, repo_prefix: str = "ryuma007/hishab-",
+               dataset: str = "ryuma007/hishab-synthetic-v4") -> str:
     from huggingface_hub import HfApi
 
     api = HfApi()
     repo = f"{repo_prefix}{run.replace('__', '-').replace('_', '-')}-GGUF"
-    card, files = _render_card(run, repo, only)
+    card, files = _render_card(run, repo, only, dataset)
     if not files:
         raise RuntimeError(f"no GGUF files matched {only} in {run}")
     api.create_repo(repo, repo_type="model", exist_ok=True)
@@ -378,7 +386,7 @@ def push_ggufs(run: str, only: list[str] | None = None, repo_prefix: str = "ryum
     api.upload_file(path_or_fileobj=card.encode(), path_in_repo="README.md", repo_id=repo)
     edir = Path(RUNS_DIR) / run / "eval_gguf"
     if edir.exists():
-        api.upload_folder(folder_path=str(edir), repo_id=repo, path_in_repo="eval", allow_patterns=["*.test.json"])
+        api.upload_folder(folder_path=str(edir), repo_id=repo, path_in_repo="eval", allow_patterns=["*.test.json", "*.numbers.json"])
     return f"https://huggingface.co/{repo}"
 
 

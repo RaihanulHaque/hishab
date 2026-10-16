@@ -21,12 +21,12 @@ license: apache-2.0
 base_model: {hf_id}
 language: [bn, en]
 tags: [finance, information-extraction, banglish, bangla, qwen3.5, hishab]
-datasets: [ryuma007/hishab-synthetic-v3]
+datasets: [{dataset}]
 ---
 
 # {repo_name}
 
-Merged bf16 weights of `{hf_id}` fine-tuned (LoRA r=16, merged) to turn a Banglish / Bangla /
+bf16 weights of `{hf_id}` fine-tuned ({training}) to turn a Banglish / Bangla /
 English message about money into a JSON array of transactions:
 
 ```json
@@ -52,6 +52,7 @@ Qwen3.5 is trained and served with thinking disabled (empty `<think>` block in t
 | tuple F1 | {f1:.1f}% |
 | valid JSON | {valid:.1f}% |
 | Banglish / Bangla / English / mixed exact | {bl:.1f} / {bn:.1f} / {en:.1f} / {mx:.1f} |
+| numbers split exact (357 rows, amounts spelled out in words) | {num} |
 
 Quantized GGUF builds for llama.cpp live in [`{repo}-GGUF`](https://huggingface.co/{repo}-GGUF).
 Training pipeline: https://github.com/RaihanulHaque/hishab (`ml/`). Full results: `eval_hf.json` in this repo.
@@ -59,7 +60,7 @@ Training pipeline: https://github.com/RaihanulHaque/hishab (`ml/`). Full results
 
 
 @app.function(image=gguf_image, cpu=4, timeout=60 * 60, volumes=VOLUMES, secrets=[hf_secret])
-def push_model(run: str, repo_prefix: str = "ryuma007/hishab-") -> str:
+def push_model(run: str, repo_prefix: str = "ryuma007/hishab-", dataset: str = "ryuma007/hishab-synthetic-v4") -> str:
     from huggingface_hub import HfApi
 
     from hishab.prompts import system_prompt
@@ -76,7 +77,11 @@ def push_model(run: str, repo_prefix: str = "ryuma007/hishab-") -> str:
     example = json.dumps([{"description": "tuition fee", "amount": 5000.0, "category": "tuition", "type": "expense"},
                           {"description": "rickshaw", "amount": 80.0, "category": "transport", "type": "expense"}],
                          indent=1)
-    card = CARD.format(hf_id=meta["hf_id"], repo=repo, repo_name=repo.split("/")[-1], example=example,
+    num = f"{100 * meta['splits']['numbers']['all']['exact_match']:.1f}%" if "numbers" in meta["splits"] else "-"
+    training = ("full fine-tune, all weights" if meta.get("tune") == "full"
+                else f"LoRA r={meta.get('lora_r', 16)}, merged")
+    training += f", {meta['epochs']:g} epochs, lr {meta['lr']:g}"
+    card = CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, num=num, repo_name=repo.split("/")[-1], example=example,
                        system_prompt=system_prompt(meta["fmt"]), exact=pct(test["all"]), f1=100 * test["all"]["tx_f1"],
                        valid=pct(test["all"], "valid_json"), bl=pct(lang["banglish"]), bn=pct(lang["bangla"]),
                        en=pct(lang["english"]), mx=pct(lang["mixed"]))

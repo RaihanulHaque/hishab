@@ -264,6 +264,8 @@ category because the entry silently disappears.
 - **Lesson:** with this much data, updating all weights beats LoRA by a wide margin, even though its validation loss looked worse after epoch 1.
 - **Phone format:** Q6_K scores 89.2 on test, only 0.4 below bf16, and 80.1 on numbers. That is 3.1 and 6.2 points above any earlier GGUF. Q4_K_M-imat, at 529 MB, scores 88.6 and 80.1, so the smaller file is nearly as good.
 - **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat, the best of any version. Q6_K's two misses are "bish hajar pachsho" read as 25000 and "সাড়ে তিন হাজার" split into two entries. Q4_K_M-imat's misses are 25000 again and 21000 read as 12000.
+- **Published 2026-10-17:** GGUFs (Q6_K, Q5_K_M, Q4_K_M-imat) at `ryuma007/hishab-qwen3.5-0.8b-json-full-v8-GGUF`, bf16 weights at `ryuma007/hishab-qwen3.5-0.8b-json-full-v8`, and the training data at `ryuma007/hishab-synthetic-v4` (train, validation, test and numbers splits).
+- **Cost:** per step, the full fine-tune (1.64 s) ran about as fast as LoRA v7 (1.77 s). LoRA saves little on this model because a third of its weights are the 248k-token output layer, which costs the same either way. v8 was cheaper than v7 overall because it ran 3 epochs instead of 5 and was not preempted.
 - **Verdict:** v8 Q6_K is the ship candidate. It beats the shipped v5 on test (89.2 vs 86.5) and fixes spelled-out numbers (80.1 at Q6_K, against v5's 13.4 even at full precision).
 
 ## Open problems
