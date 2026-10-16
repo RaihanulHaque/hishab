@@ -75,8 +75,51 @@ def render(a: int, lang: str, style: str, rng: random.Random) -> str:
 
 _PH = re.compile(r"\{(A\d+)\}")
 
+TOTAL_SUFFIX = {
+    "banglish": [" mot {T} tk", ", total {T}", " sob miliye {T} taka gelo", ". ajke mot {T}", " = {T} tk total"],
+    "mixed": [" মোট {T} টাকা", " total {T} tk", " সব মিলিয়ে {T}", ", mot {T}"],
+    "bangla": [" মোট {T} টাকা", " সব মিলিয়ে {T} টাকা গেল", ", মোট {T}"],
+    "english": [", total {T}", " that's {T} in total", " ({T} all together)"],
+}
 
-def fill(t: dict, rng: random.Random, digit_free: bool) -> dict | None:
+
+def with_total(text: str, lang: str, amounts: list[int], rng: random.Random) -> str:
+    """Append a stated total of the expenses; the label must not include it (guideline)."""
+    total = sum(amounts)
+    shown = render(total, lang, "digits" if rng.random() < 0.7 else "words", rng)
+    return text.rstrip(" .।") + rng.choice(TOTAL_SUFFIX[lang]).replace("{T}", shown)
+
+
+_EMOJI = ["😩", "🙂", "😅", "🥲", "👍", "🤦", "😭", "...", "!!", " :("]
+
+
+def noise(text: str, protect: list[str], rng: random.Random) -> str:
+    """Phone typing: lowercase, a dropped letter, a doubled letter, a missing space, an emoji.
+    Never touches the amount strings in `protect`."""
+    spans = [(m.start(), m.end()) for p in protect for m in re.finditer(re.escape(p), text)]
+
+    def safe(i: int) -> bool:
+        return not any(a <= i < b for a, b in spans)
+
+    chars = list(text)
+    if rng.random() < 0.5:
+        chars = [c.lower() for c in chars]
+    letters = [i for i, c in enumerate(chars) if c.isalpha() and safe(i)]
+    if letters and rng.random() < 0.4:   # drop a letter
+        chars[rng.choice(letters)] = ""
+    if letters and rng.random() < 0.25:  # double a letter
+        i = rng.choice(letters)
+        chars[i] = chars[i] * 2
+    spaces = [i for i, c in enumerate(chars) if c == " " and safe(i) and safe(i + 1)]
+    if spaces and rng.random() < 0.35:   # glue two words
+        chars[rng.choice(spaces)] = ""
+    out = "".join(chars)
+    if rng.random() < 0.3:
+        out = out.rstrip() + rng.choice(_EMOJI)
+    return out
+
+
+def fill(t: dict, rng: random.Random, digit_free: bool, totals_rate: float = 0.0, noise_rate: float = 0.0) -> dict | None:
     lang = t["lang"]
     styles = {s["id"]: pick_style(lang, rng, digit_free) for s in t["slots"]}
     amounts = {s["id"]: sample_amount(s["size"], rng, words=styles[s["id"]] != "digits") for s in t["slots"]}
@@ -88,6 +131,11 @@ def fill(t: dict, rng: random.Random, digit_free: bool) -> dict | None:
     translation = _PH.sub(lambda m: f"{amounts[m.group(1)]:,}", t["translation"])
     order = _PH.findall(t["text"])
     by_id = {s["id"]: s for s in t["slots"]}
+    expense_ids = [i for i in order if by_id[i]["type"] == "expense"]
+    if len(expense_ids) >= 2 and rng.random() < totals_rate:
+        text = with_total(text, lang, [amounts[i] for i in expense_ids], rng)
+    if rng.random() < noise_rate:
+        text = noise(text, list(shown.values()), rng)
     txs = [{"description": by_id[i]["description"], "amount": float(amounts[i]), "category": by_id[i]["category"],
             "type": by_id[i]["type"]} for i in order]
     n = len(txs)
@@ -118,6 +166,8 @@ def main() -> None:
     ap.add_argument("--digit-free", action="store_true", help="amounts in words only (eval sets)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--generated-by", default="codex-template-v1")
+    ap.add_argument("--totals-rate", type=float, default=0.0, help="share of multi-expense rows that also state a total")
+    ap.add_argument("--noise-rate", type=float, default=0.0, help="share of rows with phone-typing noise")
     args = ap.parse_args()
 
     rng = random.Random(args.seed)
@@ -128,7 +178,7 @@ def main() -> None:
         t["generated_by"] = args.generated_by
         for _ in range(args.per_template):
             for _attempt in range(5):
-                r = fill(t, rng, args.digit_free)
+                r = fill(t, rng, args.digit_free, args.totals_rate, args.noise_rate)
                 if r and r["messages"][1]["content"] not in seen:
                     seen.add(r["messages"][1]["content"])
                     rows.append(r)
