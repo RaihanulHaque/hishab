@@ -13,6 +13,7 @@ import json
 import re
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -33,7 +34,7 @@ def main() -> None:
     probes = [json.loads(l) for l in args.probes.read_text().splitlines() if l.strip()]
     n_amount = n_cat = n_exact = 0
     for p in probes:
-        prompt = TEMPLATE.format(sys=system_prompt(args.fmt), user=p["instruction"])
+        prompt = TEMPLATE.format(sys=system_prompt(args.fmt), user=unicodedata.normalize("NFC", p["instruction"]))
         out = subprocess.run([args.kiln, "-m", args.model, "--raw", "-p", prompt, "-n", "200"],
                              capture_output=True, text=True).stdout
         out = re.sub(r"\x1b\[[0-9;]*m", "", out)

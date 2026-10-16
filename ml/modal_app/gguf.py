@@ -180,6 +180,10 @@ class LlamaServer:
         raise TimeoutError("llama-server did not become healthy")
 
     def chat(self, messages: list[dict], max_tokens: int) -> dict:
+        # The HF tokenizer applies NFC; llama.cpp does not. Bengali য়/ড়/ঢ় have precomposed code
+        # points that NFC decomposes, so normalise here or the GGUF sees tokens the model never saw.
+        import unicodedata
+        messages = [{**m, "content": unicodedata.normalize("NFC", m["content"])} for m in messages]
         import requests
 
         r = requests.post(
