@@ -4,7 +4,7 @@ Every training version of the shipping model line: Qwen3.5-0.8B, `json` output. 
 this file records the data, the training setup, every score we have, the error breakdown and
 what we learned. `RESULTS.md` has the other base models (LFM2.5, Gemma) and `two_phase` runs.
 
-Last updated 2026-10-17 01:20, with v8 training.
+Last updated 2026-10-17 01:57, with v8 at 46%.
 
 ## How to read the numbers
 
@@ -241,6 +241,7 @@ category because the entry silently disappears.
 ### v8: full fine-tune, running
 - **Data:** same as v7.
 - **Training:** all weights instead of LoRA, 3 epochs, best epoch by validation loss. 3,813 steps, about 1 h 45 min, started 01:08.
+- **Progress at 01:57:** step 1,737 of 3,813, no preemption. Epoch-1 validation loss 0.1254, higher than LoRA v7's 0.1121 at the same point.
 - **Goal:** keep v7's test and probe gains without the type flips and dropped entries.
 - **Decision rule:** if v8 is not clearly better than v6 on both test and numbers, the next candidate is a clean LoRA run on v7 data with 3 epochs. That needs approval before any Modal spend.
 
