@@ -1,5 +1,7 @@
 # v6 / v7 notes (overnight 2026-10-16 → 17)
 
+> The running summary of every version lives in `EXPERIMENTS.md`. This file keeps the v6/v7 detail.
+
 Qwen3.5-0.8B, LoRA r=16, bf16 greedy on the held-out splits. `numbers` = 357 digit-free rows
 with spelled-out amounts (`ml/datasets/splits/numbers.jsonl`), never trained on. Probes = the
 20 Banglish/Bangla number phrases in `ml/datasets/probes_numbers.jsonl` run on the Q6_K GGUF
