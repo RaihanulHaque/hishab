@@ -144,7 +144,8 @@ def main() -> None:
             meta = r.get("metadata", {})
             splits["train"].append({
                 "id": r["id"], "language": meta.get("lang", "unknown"), "complexity": meta.get("complexity", "unknown"),
-                "source": meta.get("generated_by", "extra"), "instruction": user, "translation": "",
+                "source": meta.get("generated_by", "extra"), "instruction": user,
+                "translation": meta.get("translation", ""),  # LLM-template rows carry one for two_phase
                 "transactions": [{"description": t["description"], "amount": float(t["amount"]),
                                   "category": t["category"], "type": t["type"]} for t in r["raw_transactions"]],
             })

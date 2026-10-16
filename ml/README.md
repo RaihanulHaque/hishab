@@ -94,6 +94,29 @@ family remittances, education side-costs, spelled-out numbers, totals). Both go 
 numbers remain comparable. Runs trained on the enlarged data carry the `--tag v4` suffix
 (5000 programmatic + 113 hand-written) or `--tag v5` (number words + 42 more hand-written rows).
 
+## Numbers data: Codex templates + the numwords engine (v6)
+
+The v5 model got every spelled-out Banglish amount wrong ("ponero hajar" -> 12000) because
+only ~1% of training rows had a number without digits and the test set had none. The fix
+splits the work: an LLM writes the sentences, a deterministic engine owns the numbers.
+
+- `ml/hishab/numwords.py`: any integer -> Banglish words (spelling variants), Bangla script,
+  Indian grouping, fractions (der / arai / sare), digit-word mixes ("15 hajar 500", "1.5 lakh",
+  "80k"); plus `parse()` for the inverse. `ml/tests/test_numwords.py` round-trips thousands of
+  amounts.
+- `ml/data/generate_llm_templates.py --lang banglish|bangla|mixed|english`: asks Codex
+  (`codex exec`, read-only, ephemeral) for messages with `{A1}` placeholders instead of
+  amounts, each slot labelled with description / category / type / size, plus an English
+  translation. Validated and deduped; appends to `ml/datasets/llm_templates_v1.jsonl`.
+- `ml/data/fill_templates.py`: fills the placeholders from the engine, checks each rendering
+  parses back to the labelled amount, writes extra-train rows with the translation in
+  `metadata.translation` (build_splits.py now carries it into the split for `two_phase`).
+  `--digit-free` makes word-only rows for an eval set.
+- `ml/data/augment_numbers.py`: rewrites the digit amounts of existing Gemini rows as words,
+  labels unchanged (`synthetic_numwords_aug_v1.jsonl`).
+- `ml/datasets/probes_numbers.jsonl` + `ml/scripts/probe_gguf.py`: 20 number probes run
+  through kiln-cli on a GGUF, the same path as the phone.
+
 ## Why v3 splits
 
 `ryuma007/hishab-synthetic-v2`'s validation split is a subset of its train split, so the

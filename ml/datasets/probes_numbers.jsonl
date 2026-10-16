@@ -1,0 +1,20 @@
+{"instruction": "ponero hajar taka salary pelam", "amount": 15000, "category": "salary", "type": "income"}
+{"instruction": "sare tin hajar takar bazar korlam", "amount": 3500, "category": "grocery", "type": "expense"}
+{"instruction": "rickshaw vara ek hajar pachsho", "amount": 1500, "category": "transport", "type": "expense"}
+{"instruction": "dui lakh bish hajar taka loan nilam", "amount": 220000, "category": "loan", "type": "income"}
+{"instruction": "der lakh taka pelam abbu theke", "amount": 150000, "category": "gift", "type": "income"}
+{"instruction": "cha khelam chollish taka", "amount": 40, "category": "food", "type": "expense"}
+{"instruction": "lunch tin sho ponchash taka", "amount": 350, "category": "food", "type": "expense"}
+{"instruction": "paytallish hajar taka salary", "amount": 45000, "category": "salary", "type": "income"}
+{"instruction": "eksho bish taka recharge", "amount": 120, "category": "mobile_recharge", "type": "expense"}
+{"instruction": "bish hajar pachsho takar phone kinlam", "amount": 20500, "category": "shopping", "type": "expense"}
+{"instruction": "sat sho taka oushudh", "amount": 700, "category": "medical", "type": "expense"}
+{"instruction": "ekush hajar taka vara dilam", "amount": 21000, "category": "rent", "type": "expense"}
+{"instruction": "15 hajar 500 taka tuition fee", "amount": 15500, "category": "tuition", "type": "expense"}
+{"instruction": "pach hajar 2 sho taka bazar", "amount": 5200, "category": "grocery", "type": "expense"}
+{"instruction": "পনেরো হাজার টাকা বেতন পেলাম", "amount": 15000, "category": "salary", "type": "income"}
+{"instruction": "আড়াই হাজার টাকার ওষুধ", "amount": 2500, "category": "medical", "type": "expense"}
+{"instruction": "১৫ হাজার ৫০০ টাকা বাসা ভাড়া", "amount": 15500, "category": "rent", "type": "expense"}
+{"instruction": "সাড়ে তিন হাজার টাকা বাজার", "amount": 3500, "category": "grocery", "type": "expense"}
+{"instruction": "dersho taka cha nasta", "amount": 150, "category": "food", "type": "expense"}
+{"instruction": "salary pelam 80k", "amount": 80000, "category": "salary", "type": "income"}
