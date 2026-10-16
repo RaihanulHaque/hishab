@@ -13,7 +13,7 @@ through kiln-cli (the phone path).
 | v6 | 18,582 | 85.7 | **81.8** | **356/357** | 16/20 | Codex templates + numwords; 5 epochs, best epoch 2 |
 | v7 | 20,333 | 86.7 | 77.6 | 354/357 | – | epoch-4 weights of a preempted 5-epoch run (see below) |
 
-GGUF of v6 on the numbers slice: F16 75.9, BF16 76.2, Q8_0 76.8, Q6_K 75.9, Q5_K_M 73.9,
+GGUF of v6 on the numbers slice: F16 75.9, BF16 76.2, Q8_0 76.8, Q6_K 73.9, Q5_K_M 73.9,
 Q4_K_M-imat 73.1; "-e8" variants (Q8_0 embeddings/output) change nothing. The ~6-point gap
 to bf16 is therefore llama.cpp's inference path for this model, not quantization: the same
 Bangla-script compounds drop a zero in every GGUF ("নয় হাজার পাঁচশো" → 950) while HF gets
