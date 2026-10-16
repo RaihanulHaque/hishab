@@ -1,47 +1,52 @@
 {
   "seed": 42,
   "dropped": {
-    "duplicate": 14
+    "duplicate": 14,
+    "extra_duplicate": 5
   },
   "missing_translation": 0,
-  "extra_train_rows": 5155,
+  "extra_train_rows": 14173,
   "extra_train_files": [
     "ml/datasets/synthetic_programmatic_v1.jsonl",
-    "ml/datasets/synthetic_handwritten_v1.jsonl"
+    "ml/datasets/synthetic_handwritten_v1.jsonl",
+    "ml/datasets/synthetic_llm_v1.jsonl",
+    "ml/datasets/synthetic_numwords_aug_v1.jsonl"
   ],
   "splits": {
     "train": {
-      "n": 9564,
+      "n": 18582,
       "language": {
-        "banglish": 5032,
-        "mixed": 1400,
-        "english": 859,
-        "bangla": 2273
+        "banglish": 9204,
+        "mixed": 3346,
+        "bangla": 4271,
+        "english": 1761
       },
       "source": {
-        "base": 4240,
         "programmatic-lexicon-v1": 5000,
-        "hard": 169,
+        "base": 4240,
+        "codex-template-v1": 7327,
         "handwritten-v1": 113,
+        "numwords-aug-v1": 1691,
+        "hard": 169,
         "handwritten-v2": 42
       },
       "n_tx": {
         "0": 47,
-        "1": 3529,
-        "2": 4201,
-        "3": 1400,
-        "4": 200,
-        "5": 184,
+        "1": 7692,
+        "2": 8279,
+        "3": 1927,
+        "4": 449,
+        "5": 185,
         "6": 3
       }
     },
     "validation": {
       "n": 259,
       "language": {
-        "bangla": 62,
-        "english": 50,
         "mixed": 37,
-        "banglish": 110
+        "bangla": 62,
+        "banglish": 110,
+        "english": 50
       },
       "source": {
         "base": 249,
@@ -58,9 +63,9 @@
     "test": {
       "n": 518,
       "language": {
-        "bangla": 125,
-        "mixed": 75,
         "english": 99,
+        "mixed": 75,
+        "bangla": 125,
         "banglish": 219
       },
       "source": {

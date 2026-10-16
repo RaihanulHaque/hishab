@@ -34,32 +34,37 @@ SIZE_RANGES = {
 }
 
 
-def sample_amount(size: str, rng: random.Random) -> int:
+def sample_amount(size: str, rng: random.Random, words: bool) -> int:
+    """An amount of this size. Spoken amounts are round ("sare tin hajar", "bish hajar"): when
+    the amount will be written in words only round values are drawn; digits may be anything."""
     lo, hi, step = SIZE_RANGES[size]
     r = rng.random()
-    if r < 0.55:                       # round: 1500, 20000, 45000
-        return max(lo, round(rng.randint(lo, hi) / step) * step)
-    if r < 0.8 and hi >= 1000:         # half units: 1500, 3500, 150000 (so der/arai/sare appear)
-        base = max(1000, 10 ** (len(str(lo)) - 1))
-        return min(hi, max(lo, (rng.randint(1, 9) * 2 + 1) * base // 2))
-    return rng.randint(lo, hi)         # arbitrary: 1234, 15750
+    if words or r < 0.55:
+        if hi >= 1000 and rng.random() < 0.3:      # half units so der / arai / sare appear
+            base = max(1000, 10 ** (len(str(lo)) - 1))
+            return min(hi, max(lo, (rng.randint(1, 9) * 2 + 1) * base // 2))
+        coarse = step * (10 if rng.random() < 0.5 else 2)  # 20,000 / 45,000 rather than 23,500
+        v = round(rng.randint(lo, hi) / coarse) * coarse
+        return int(min(hi, max(lo, v)))
+    return rng.randint(lo, hi)
 
 
-def render(a: int, lang: str, rng: random.Random, digit_free: bool) -> str:
-    """How the amount appears in the message."""
+def pick_style(lang: str, rng: random.Random, digit_free: bool) -> str:
+    """words | mix | digits, per language."""
+    if digit_free:
+        return "words"
     r = rng.random()
     if lang == "english":
-        if digit_free or r < 0.25:
-            return to_words(a, "banglish", rng, mix_digits=not digit_free and rng.random() < 0.5)
-        if r < 0.5 and a >= 1000 and a % 100 == 0:
-            return f"{a / 1000:g}k"
-        return f"{a:,}" if r < 0.7 else str(a)
+        return "words" if r < 0.2 else "mix" if r < 0.4 else "digits"
+    return "words" if r < 0.5 else "mix" if r < 0.72 else "digits"
+
+
+def render(a: int, lang: str, style: str, rng: random.Random) -> str:
+    """How the amount appears in the message."""
     words_lang = "bangla" if lang == "bangla" else "banglish"
-    if digit_free:
+    if style == "words":
         return to_words(a, words_lang, rng)
-    if r < 0.5:
-        return to_words(a, words_lang, rng)
-    if r < 0.75 and a >= 1000:
+    if style == "mix" and a >= 1000:
         return to_words(a, words_lang, rng, mix_digits=True)
     if lang == "bangla" or (lang == "mixed" and rng.random() < 0.5):
         return str(a).translate(BN_DIGITS)
@@ -73,8 +78,9 @@ _PH = re.compile(r"\{(A\d+)\}")
 
 def fill(t: dict, rng: random.Random, digit_free: bool) -> dict | None:
     lang = t["lang"]
-    amounts = {s["id"]: sample_amount(s["size"], rng) for s in t["slots"]}
-    shown = {sid: render(a, lang, rng, digit_free) for sid, a in amounts.items()}
+    styles = {s["id"]: pick_style(lang, rng, digit_free) for s in t["slots"]}
+    amounts = {s["id"]: sample_amount(s["size"], rng, words=styles[s["id"]] != "digits") for s in t["slots"]}
+    shown = {sid: render(a, lang, styles[sid], rng) for sid, a in amounts.items()}
     for sid, s in shown.items():       # the rendering must read back as the amount we labelled
         if parse(s) != amounts[sid]:
             return None
