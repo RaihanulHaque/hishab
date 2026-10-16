@@ -30,10 +30,11 @@ def pct(x) -> str:
 
 def render(data: dict) -> str:
     lines = ["# Hishab fine-tune results", "", "Held-out **test** split (518 rows) unless noted. exact = multiset of "
-             "(amount, category, type) equals gold. F1 = micro F1 over those tuples.", ""]
+             "(amount, category, type) equals gold. F1 = micro F1 over those tuples. numbers = the 357-row "
+             "digit-free slice (spelled-out amounts), v6 runs only.", ""]
     lines += ["## Full-precision models (bf16, HF transformers, greedy)", "",
-              "| run | base | fmt | tune | best val loss | valid JSON | exact | F1 | cat acc | type acc | banglish exact | bangla exact | english exact | mixed exact | avg out tok | train min |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "| run | base | fmt | tune | best val loss | valid JSON | exact | F1 | cat acc | type acc | banglish exact | bangla exact | english exact | mixed exact | numbers exact | avg out tok | train min |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(data["hf"], key=lambda r: -r["splits"]["test"]["all"]["exact_match"]):
         t = r["splits"]["test"]
         a, bl = t["all"], t["by_language"]
@@ -42,6 +43,7 @@ def render(data: dict) -> str:
             f"**{pct(a['exact_match'])}** | {pct(a['tx_f1'])} | {pct(a['category_acc'])} | {pct(a['type_acc'])} | "
             f"{pct(bl.get('banglish', {}).get('exact_match'))} | {pct(bl.get('bangla', {}).get('exact_match'))} | "
             f"{pct(bl.get('english', {}).get('exact_match'))} | {pct(bl.get('mixed', {}).get('exact_match'))} | "
+            f"{pct(r['splits'].get('numbers', {}).get('all', {}).get('exact_match'))} | "
             f"{t['avg_completion_tokens']} | {r['train_time_s'] / 60:.0f} |"
         )
     if data["gguf"]:
