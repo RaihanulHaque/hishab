@@ -4,7 +4,8 @@ Every training version of the shipping model line: Qwen3.5-0.8B, `json` output. 
 this file records the data, the training setup, every score we have, the error breakdown and
 what we learned. `RESULTS.md` has the other base models (LFM2.5, Gemma) and `two_phase` runs.
 
-Last updated 2026-10-17 (evening). v9 closes the GGUF Bangla gap.
+Last updated 2026-10-17 (night). v9 closes the GGUF Bangla gap; v10 trains on relabelled Gemini rows
+and is scored on the two-labeller clean sets (`test_clean`, `numbers_clean`, see RELABEL.md).
 
 ## How to read the numbers
 
@@ -13,6 +14,8 @@ Last updated 2026-10-17 (evening). v9 closes the GGUF Bangla gap.
 | `validation` | 259 | used for picking the best epoch; reported but not the headline |
 | `test` | 518 | held-out Gemini-generated messages in four languages. The gold labels are noisy (see ERROR_ANALYSIS.md), so about 90 is the ceiling |
 | `numbers` | 357 | held-out digit-free messages where every amount is spelled out, like "der hajar" or "পনেরো হাজার". Added in v6, never trained on |
+| `test_clean` | 476 | the `test` rows where Gemini 3.8 Flash and Sonnet 5.5, labelling from scratch with the guideline, agree; their label is the gold (72 rows differ from `test`). Headline from v10 on |
+| `numbers_clean` | 317 | the same for `numbers` (52 rows differ, all category) |
 | probes | 20 | short number phrases run through kiln-cli on the Q6_K file, which is exactly what the phone runs |
 
 - **exact:** the set of (amount, category, type) for the message equals gold. One wrong field fails the whole message.
@@ -35,7 +38,16 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
 | v8 | 20,333 | **89.6** | 89.2 | **84.9** | 80.1 | **18/20** | full fine-tune; trained with the mis-tokenizing transformers-5 tokenizer |
-| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | 17/20 | **v8 recipe with the faithful tokenizer; GGUF now equals bf16; Q4_K_M-imat 89.6 / 84.0, ship candidate** |
+| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | 17/20 | v8 recipe with the faithful tokenizer; GGUF now equals bf16; Q4_K_M-imat 89.6 / 84.0 |
+| v10 | 20,057 | 80.3 | 81.1 | **85.2** | **85.2** | **18/20** | **v9 recipe on relabelled Gemini rows; old-gold test drops by design, test_clean 92.2 / 93.1 Q6_K** |
+
+On the clean gold (the scoreboard from v10 on):
+
+| version | test_clean bf16 | test_clean Q6_K | test_clean Q4_K_M-imat | numbers_clean bf16 | numbers_clean Q6_K | numbers_clean Q4_K_M-imat |
+|---|---|---|---|---|---|---|
+| v8 | 84.5 | | | 77.9 | | |
+| v9 | 83.6 | | | **79.5** | | |
+| v10 | **92.2** | **93.1** | **93.1** | 78.9 | 79.2 | 79.2 |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -57,23 +69,40 @@ epoch by validation loss is kept.
 | v7 | 4 of 5 | 2 | 0.1076 | .1121 / .1076 / .1119 / .1231 | 0.007 | preempted, see v7 |
 | v8 (full, lr 3e-5) | 3 | 2 | 0.1112 | .1254 / .1112 / .1213 | 0.007 | 104 min |
 | v9 (full, lr 3e-5, faithful tokenizer) | 3 | 2 | 0.1123 | .1223 / .1123 / .1235 | 0.007 | 85 min |
+| v10 (as v9, relabelled train) | 3 | 2 | 0.1228 | .1308 / .1228 / .1311 | | 68 min |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
 falling. More than 3 epochs is overfitting on this data.
 
 ## Training data by version
 
-| source | v3 | v4 | v5 | v6 | v7 |
-|---|---|---|---|---|---|
-| Gemini base rows | 4,240 | 4,240 | 4,240 | 4,240 | 4,240 |
-| Gemini hard rows | 169 | 169 | 169 | 169 | 169 |
-| programmatic lexicon | | 5,000 | 5,000 | 5,000 | 5,000 |
-| hand-written | | 113 | 155 | 155 | 155 |
-| Codex templates | | | | 7,327 | 7,328 (refilled) |
-| Codex Bangla word-amounts | | | | | 1,447 |
-| digits rewritten as words | | | | 1,691 | 1,691 |
-| no-transaction rows (`[]`) | | | | | 303 |
-| **total** | **4,409** | **9,522** | **9,564** | **18,582** | **20,333** |
+Which dataset each model version was trained and evaluated on:
+
+| model version | train rows | local train file | published dataset (HF) | eval splits in it |
+|---|---|---|---|---|
+| v1-v2 | 5,200 | notebook data | `ryuma007/hishab-synthetic-v2` (validation leaks into train) | none trustworthy |
+| v3 | 4,409 | the `base` / `hard` rows of `splits/train.jsonl` | `ryuma007/hishab-synthetic-v3` | validation, test |
+| v4 | 9,522 | not saved | not published (v3 + programmatic + hand-written) | |
+| v5 | 9,564 | not saved | not published (v4 + 42 hand-written) | |
+| v6 | 18,582 | not saved | not published | |
+| v7, v8, v9 | 20,333 | `splits/train.jsonl` | `ryuma007/hishab-synthetic-v4` | validation, test, numbers |
+| v10 | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
+
+"Not saved" sets were built by `ml/data/build_splits.py` from the `ml/datasets/synthetic_*.jsonl`
+sources as they stood then. Validation, test and numbers are the same rows in every dataset version
+from v3 (numbers from v4 on); v5 adds the relabelled `test_clean` and `numbers_clean` subsets and keeps the originals.
+
+| source | v3 | v4 | v5 | v6 | v7 (= v8, v9) | v10 |
+|---|---|---|---|---|---|---|
+| Gemini base rows | 4,240 | 4,240 | 4,240 | 4,240 | 4,240 | 3,976 relabelled |
+| Gemini hard rows | 169 | 169 | 169 | 169 | 169 | 157 relabelled |
+| programmatic lexicon | | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 |
+| hand-written | | 113 | 155 | 155 | 155 | 155 |
+| Codex templates | | | | 7,327 | 7,328 (refilled) | 7,328 |
+| Codex Bangla word-amounts | | | | | 1,447 | 1,447 |
+| digits rewritten as words | | | | 1,691 | 1,691 | 1,691 |
+| no-transaction rows (`[]`) | | | | | 303 | 303 |
+| **total** | **4,409** | **9,522** | **9,564** | **18,582** | **20,333** | **20,057** |
 
 Train rows by language:
 
@@ -83,6 +112,7 @@ Train rows by language:
 | v5 | 5,032 | 2,273 | 1,400 | 859 |
 | v6 | 9,204 | 4,271 | 3,346 | 1,761 |
 | v7 | 9,337 | 5,111 | 4,065 | 1,820 |
+| v10 | 9,161 | 5,063 | 4,031 | 1,802 |
 
 Transactions per message in train:
 
@@ -92,6 +122,7 @@ Transactions per message in train:
 | v5 | 47 | 3,529 | 4,201 | 1,400 | 387 |
 | v6 | 47 | 7,692 | 8,279 | 1,927 | 637 |
 | v7 | 350 | 8,445 | 8,861 | 1,995 | 682 |
+| v10 | 458 | 8,373 | 8,618 | 1,932 | 676 |
 
 ## Test set, bf16, in detail
 
@@ -104,6 +135,8 @@ Transactions per message in train:
 | v7 | 86.7 | 93.0 | 97.1 | 96.3 | 95.3 | 98.9 | 79.0 | 89.6 | 93.9 | 94.7 |
 | v8 | **89.6** | **94.4** | 98.3 | **98.1** | **95.3** | **99.6** | 83.1 | **92.0** | **94.9** | **97.3** |
 | v9 | 89.2 | 93.9 | **98.6** | 97.7 | **95.8** | 99.0 | **83.6** | 91.2 | **94.9** | 94.7 |
+| v10 | 80.3 | 89.3 | 93.1 | 93.1 | 92.0 | 99.2 | 73.1 | 87.2 | 79.8 | 90.7 |
+| v10 on `test_clean` (476) | **92.2** | **95.7** | 97.7 | 97.5 | 96.8 | 99.5 | 86.4 | 97.4 | 97.0 | 93.1 |
 
 Wrong messages by first failing field, out of 518:
 
@@ -116,6 +149,8 @@ Wrong messages by first failing field, out of 518:
 | v7 | 69 | 15 | 4 | 9 | 41 | salary to other 6, grocery to shopping 4 |
 | v8 | **54** | 9 | 1 | 4 | 40 | entertainment to other 4, tuition to other 4 |
 | v9 | 56 | 7 | 5 | 8 | 36 | tuition to other 5, salary to other 4, other to tuition 3 |
+| v10 | 102 | 36 | 0 | 5 | 61 | shopping to tuition 8, grocery to shopping 5, tuition to salary 5 |
+| v10 on `test_clean` (of 476) | **37** | 11 | 1 | 4 | 21 | other to food 2, shopping to gift 2, other to shopping 2 |
 
 Category is two-thirds of every version's errors, and most of those swaps are cases where the
 Gemini gold disagrees with itself (ERROR_ANALYSIS.md). That is why test exact sits near 86 to 88
@@ -130,6 +165,8 @@ regardless of data.
 | v7 | 77.6 | 84.1 | 99.4 | 99.2 | 86.8 | 96.5 | 75.8 | 74.2 | 82.2 | 82.4 |
 | v8 | **84.9** | **89.2** | 99.7 | 98.9 | **90.8** | **98.8** | **81.9** | **86.5** | **88.9** | 86.5 |
 | v9 | 83.2 | 87.4 | **100.0** | **99.7** | 88.8 | **98.8** | 80.5 | 84.3 | 84.4 | **86.5** |
+| v10 | **85.2** | **89.3** | 99.7 | 99.2 | 90.6 | **99.3** | **81.9** | 83.1 | **91.1** | **90.5** |
+| v10 on `numbers_clean` (317) | 78.9 | 84.5 | 99.7 | 99.1 | 85.2 | 99.6 | 74.4 | 82.5 | 85.7 | 78.8 |
 
 Wrong messages by first failing field, out of 357:
 
@@ -140,6 +177,8 @@ Wrong messages by first failing field, out of 357:
 | v7 | 80 | 2 | 1 | 20 | 57 | gift to shopping 8, other to shopping 6, other to tuition 6 |
 | v8 | **54** | 1 | 3 | 7 | 43 | gift to shopping 8, other to shopping 7 |
 | v9 | 60 | 0 | 1 | 5 | 54 | gift to shopping 9, other to transport 7, other to shopping 6 |
+| v10 | **53** | 1 | 2 | 4 | 46 | gift to shopping 6, other to transport 4, other to shopping 3 |
+| v10 on `numbers_clean` (of 317) | 67 | 1 | 2 | 2 | 62 | salary to other 8, tuition to other 5, salary to transport 4 |
 
 From v6 on, the model reads spelled-out amounts almost perfectly at full precision. What is left
 is category convention, plus v7's 20 income/expense flips.
@@ -157,6 +196,8 @@ Test set:
 | v7 | | | 86.1 | 84.6 | 84.6 | | | | | |
 | v8 | | | **89.2** | **88.2** | **88.6** | | | | | |
 | v9 | 89.0 | **89.6** | **89.2** | **89.4** | **89.6** | | | | | |
+| v10 | | | 81.1 | **81.3** | 81.1 | | | | | |
+| v10 on `test_clean` | 92.2 | 92.2 | **93.1** | 92.6 | **93.1** | 92.9 | 93.7 | 92.9 | 93.5 | 92.6 |
 
 Numbers set:
 
@@ -166,6 +207,11 @@ Numbers set:
 | v7 | | | | 73.9 | 72.3 | 74.5 |
 | v8 | | | | **80.1** | **80.7** | **80.1** |
 | v9 | 83.2 (HF) | 83.2 | 82.9 | **83.8** | **84.0** | **84.0** |
+| v10 | 85.2 (HF) | | | 85.2 | **86.0** | 85.4 |
+| v10 on `numbers_clean` | 78.9 (HF) | 78.9 | 78.9 | 79.2 | 79.8 | 79.2 |
+
+v10 on `numbers_clean`, the rest of the ladder: Q4_K_M 78.9, Q4_0 78.2, Q4_0-imat 77.9, IQ4_XS-imat 77.9,
+Q3_K_M-imat 77.3, IQ3_M-imat 79.5. Every quant down to IQ3_M stays within a point of bf16 on both clean sets.
 
 File sizes: F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
 Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and output at Q8_0, add
@@ -185,6 +231,9 @@ Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and outpu
 | v9 | bf16 on HF | 80.5 | 84.3 | 84.4 | 86.5 |
 | v9 | Q6_K GGUF | 81.2 | **84.3** | 84.4 | 87.8 |
 | v9 | Q4_K_M-imat GGUF | 80.5 | **86.5** | 84.4 | 87.8 |
+| v10 | bf16 on HF | 81.9 | 83.1 | 91.1 | 90.5 |
+| v10 | Q6_K GGUF | 81.9 | 83.1 | 91.1 | 90.5 |
+| v10 | Q4_K_M-imat GGUF | 81.9 | 84.3 | 91.1 | 90.5 |
 
 Through v8, Banglish was the same on both paths while Bangla dropped about 17 points even in
 BF16 GGUF, which has the same weights as HF. The cause was not llama.cpp: transformers 5.10.2's
@@ -201,29 +250,29 @@ does this. The app's lenient parser drops such entries, so the user would see a 
 
 ## Phone probes, Q6_K through kiln-cli
 
-| probe | want | v5 | v6 | v7 | v8 | v9 Q6_K / Q4_K_M-imat |
-|---|---|---|---|---|---|---|
-| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ | 3000 |
-| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ | ✓ |
-| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ | ✓ |
-| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ | 150000 salary |
-| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ | ✓ |
-| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ | ✓ |
-| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ | ✓ |
-| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 | 26000 / 20000 |
-| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ | ✓ |
-| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ | ✓ |
-| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ | ✓ |
-| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ | ✓ |
-| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ | ✓ |
-| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ | ✓ |
-| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 | ✓ |
-| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** | **17/20** (both) |
+| probe | want | v5 | v6 | v7 | v8 | v9 Q6_K / Q4_K_M-imat | v10 (both) |
+|---|---|---|---|---|---|---|---|
+| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ | 3000 | 3000 |
+| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ | ✓ | ✓ |
+| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ | 150000 salary | ✓ |
+| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 | 26000 / 20000 | 25000 |
+| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ | ✓ | ✓ |
+| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ | ✓ | ✓ |
+| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ | ✓ | ✓ |
+| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 | ✓ | ✓ |
+| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** | **17/20** (both) | **18/20** |
 
 v9 (both quants, on the published Hub files) misses the same three: "sare tin hajar" as 3000, "der lakh ... abbu theke" as salary instead of gift, and "bish hajar pachsho" (26000 at Q6_K, 20000 at Q4_K_M-imat); 17/20 against v8's 18/20 is one probe, inside the noise of a 20-item set, while the 357-row numbers split rose 80.1 to 83.8.
 
@@ -311,9 +360,45 @@ category because the entry silently disappears.
 - **Lesson:** verify token ids end to end (training tokenizer vs `tokenizers` vs llama.cpp) before
   trusting any GGUF number; `load_tokenizer` now asserts it on a Bangla probe at every run.
 
+### v10: guideline-consistent Gemini rows
+- **Data:** the 4,409 Gemini-written train rows (`source` base / hard) relabelled from scratch by
+  Gemini 3.8 Flash (agy) and Sonnet 5.5 with `docs/LABELLING_GUIDELINE.md`, the same way as the
+  test set (RELABEL.md). `ml/data/apply_relabel.py` keeps a row only where the two agree: 3,285
+  agree with the old gold, 848 (20.5%) take the new label, 276 where the labellers disagree are
+  dropped. The other 15,924 rows are unchanged. 20,057 rows in `splits/train_v10.jsonl`.
+- **What the relabel changed:** 596 categories, 203 transaction counts (plans with no entry,
+  stated totals, merged or split items), 9 types, 5 amounts. Top swaps: shopping to tuition 112
+  (books, photocopies, exam fees), tuition to salary 95 (tutoring income), other to tuition 66,
+  other to salary 61, gift to shopping 48.
+- **Training:** identical to v9 (full fine-tune, lr 3e-5, 3 epochs, best epoch 2, val loss
+  0.1228; the validation split still has the old labels, so its loss is not comparable).
+- **Result on the clean gold:** test_clean **92.2** bf16, **93.1** at Q6_K and Q4_K_M-imat, up from
+  v9's 83.6. Wrong messages on test_clean: 37 of 476. Bangla on test_clean 97.4, English 97.0.
+  On the 72 test rows where both labellers overrule the old gold, v10 gives the guideline
+  answer 73.6% of the time (v9: 19.4%) and the old gold 13.9% (v9: 62.5%).
+- **Result on the old gold:** test falls to 80.3, with count errors up from 7 to 36. That is the
+  intended effect: those rows are where the old gold records plans, totals or merged items
+  that the guideline does not. Numbers (old template gold) rises 83.2 to **85.2**, the best of
+  any version, and English numbers 84.4 to 91.1.
+- **numbers_clean did not move (79.5 to 78.9).** Every one of its 52 overrules is a category on a
+  Codex-template row, and the 8,775 template rows in train were not relabelled. On those 52 the
+  model still follows the template convention (63.5%) over the labellers (11.5%). Typical
+  cases: "tuition er betn pailam" (template `tuition`, guideline `salary`), "sold rice and
+  recharge, got cash" (template grocery / mobile_recharge, guideline `salary`), a panjabi bought
+  for Abbu (template `gift`, guideline `shopping`). So the template rows do not fully follow the
+  guideline on income and gift categories, contrary to what RELABEL.md assumed.
+- **GGUF:** every quant from Q8_0 to IQ3_M-imat is within a point of bf16 on both clean sets.
+  Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB.
+- **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat (sha256 verified against the volume), category and type right on all 20. "der lakh ... abbu theke" is `gift` again; the two misses are the same amount readings as before: "sare tin hajar" as 3000 and "bish hajar pachsho" as 25000.
+- **Published 2026-10-17:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v10` (bf16) and `...-v10-GGUF` (Q6_K, Q5_K_M,
+  Q4_K_M-imat; Hub sha256 verified against the volume), trained on `ryuma007/hishab-synthetic-v5`, which holds the
+  20,057-row train split and all five eval splits. Q5_K_M on the old splits: test 81.3, numbers 86.0.
+- **Next:** relabel the income/gift categories of the template rows (or regenerate them) the
+  same way; that is what numbers_clean is waiting on.
+
 ## Open problems
 
-1. **Label noise in `test`.** Category is two-thirds of every version's errors. Relabelling in progress: Sonnet 5.5 (`ml/results/relabel/sonnet.jsonl`, all 875 rows, agrees with the old gold on 81% of test) and Gemini 3.8 Flash (`gemini_shard*.jsonl`); `ml/data/relabel_merge.py` keeps rows where both agree. Labellers misread some Banglish number words ("share" = sare, "shaat" = sixty), so on the `numbers` split trust the template gold for amounts.
+1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2). Still open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
 2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
 3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
 4. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.

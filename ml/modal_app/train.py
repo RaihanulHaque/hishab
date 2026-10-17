@@ -78,6 +78,7 @@ def train(
     eval_limit: int = 0,
     train_limit: int = 0,
     tag: str = "",
+    train_split: str = "train",
 ) -> dict:
     from datasets import Dataset
     from peft import LoraConfig
@@ -94,7 +95,7 @@ def train(
     lr = lr if lr is not None else (2e-4 if tune == "lora" else 3e-5)
     print(f"### {name}: {spec['hf_id']} fmt={fmt} tune={tune} epochs={epochs} lr={lr}")
 
-    train_rows, val_rows, test_rows = load_split("train"), load_split("validation"), load_split("test")
+    train_rows, val_rows, test_rows = load_split(train_split), load_split("validation"), load_split("test")
     if train_limit:
         train_rows = train_rows[:train_limit]
     if eval_limit:
@@ -247,6 +248,7 @@ def main(
     train_limit: int = 0,
     eval_only: str = "",
     tag: str = "",
+    train_split: str = "train",
 ):
     if eval_only:
         for r in eval_hf.map([x.strip() for x in eval_only.split(",") if x.strip()], kwargs={"eval_limit": eval_limit}):
@@ -257,7 +259,7 @@ def main(
     print(f"launching {len(jobs)} runs: {jobs}")
     handles = {
         (m, f): train.spawn(m, f, tune=tune, epochs=epochs, lr=lr, lora_r=lora_r, max_steps=max_steps,
-                            eval_limit=eval_limit, train_limit=train_limit, tag=tag)
+                            eval_limit=eval_limit, train_limit=train_limit, tag=tag, train_split=train_split)
         for m, f in jobs
     }
     summary = []

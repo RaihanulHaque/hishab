@@ -136,6 +136,7 @@ def main() -> None:
     ap.add_argument("--emit-batches", type=Path, help="write batch prompts as files and exit")
     ap.add_argument("--collect", type=Path, help="directory of answer files (any name) to merge into --out")
     ap.add_argument("--tag", default="", help="labeller name written into rows (default: model)")
+    ap.add_argument("--skip-from", type=Path, nargs="*", default=[], help="treat ids present in these jsonl files as already done")
     args = ap.parse_args()
 
     rows = load_rows(args.splits, args.sources)
@@ -157,6 +158,8 @@ def main() -> None:
         ap.error("--out is required")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     done = already(args.out)
+    for p in args.skip_from:
+        done |= already(p)
     tag = args.tag or args.model
 
     if args.collect:

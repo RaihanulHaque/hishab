@@ -15,3 +15,9 @@ ml/datasets/splits/_v2_train.parquet
 
 # secrets
 .env
+
+# relabel intermediates (merged into ml/results/relabel/{gemini,sonnet}_train.jsonl)
+ml/results/relabel/batches/
+ml/results/relabel/train_batches/
+ml/results/relabel/gemini_train_*.jsonl
+ml/results/gguf_diag_preds/

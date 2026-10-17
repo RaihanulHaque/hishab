@@ -37,12 +37,21 @@ is why single-labeller amounts must not be trusted on that split.
 | v9, test | 89.2 | 90.1 | **83.6** | 62.5 → 19.4 |
 | v8, numbers | 84.9 | 87.4 | **77.9** | 65.4 → 7.7 |
 | v9, numbers | 83.2 | 87.1 | **79.5** | 61.5 → 15.4 |
+| v10, test | 80.3 | | **92.2** | 13.9 → 73.6 |
+| v10, numbers | 85.2 | | **78.9** | 63.5 → 11.5 |
 
 Read: on the 72 test rows where both labellers say the gold is wrong, the model agrees with the
 old gold about 63% of the time and with the guideline about 19%. It learned the noise. The
 4,409 Gemini-written training rows (`source` = base / hard) carry the same conventions, so the
 fix is to relabel them the same way and retrain; that is v10. The Codex-template rows (7,328 +
-1,447), the programmatic rows and the hand-written rows already follow the guideline.
+1,447), the programmatic rows and the hand-written rows were assumed to follow the guideline.
+
+**v10 result (2026-10-17):** the train relabel (`apply_relabel.py`: 3,285 kept, 848 relabelled, 276 dropped)
+moved test_clean from 83.6 to 92.2, and on the 72 overruled test rows the model now follows the
+guideline 73.6% of the time instead of 19.4%. numbers_clean did not move: its 52 overrules are all
+categories of Codex-template rows (tutoring income as `tuition`, sales income as the goods'
+category, presents as `gift`), and the template train rows carry the same conventions. The
+assumption above was wrong for income and gift categories; relabelling the template rows is next.
 
 ## Ceiling
 
