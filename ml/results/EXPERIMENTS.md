@@ -35,7 +35,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
 | v8 | 20,333 | **89.6** | 89.2 | **84.9** | 80.1 | **18/20** | full fine-tune; trained with the mis-tokenizing transformers-5 tokenizer |
-| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | pending | **v8 recipe with the faithful tokenizer; GGUF now equals bf16, ship candidate** |
+| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | pending | **v8 recipe with the faithful tokenizer; GGUF now equals bf16; Q4_K_M-imat 89.6 / 84.0, ship candidate** |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -56,6 +56,7 @@ epoch by validation loss is kept.
 | v6 | 5 | 2 | 0.1089 | .1153 / .1089 / .1137 / .1256 / .1410 | 0.002 | 103 min |
 | v7 | 4 of 5 | 2 | 0.1076 | .1121 / .1076 / .1119 / .1231 | 0.007 | preempted, see v7 |
 | v8 (full, lr 3e-5) | 3 | 2 | 0.1112 | .1254 / .1112 / .1213 | 0.007 | 104 min |
+| v9 (full, lr 3e-5, faithful tokenizer) | 3 | 2 | 0.1123 | .1223 / .1123 / .1235 | 0.007 | 85 min |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
 falling. More than 3 epochs is overfitting on this data.
@@ -102,6 +103,7 @@ Transactions per message in train:
 | v6 | 85.7 | 92.3 | 98.3 | 97.7 | 93.9 | 98.9 | 80.4 | 84.0 | 93.9 | 93.3 |
 | v7 | 86.7 | 93.0 | 97.1 | 96.3 | 95.3 | 98.9 | 79.0 | 89.6 | 93.9 | 94.7 |
 | v8 | **89.6** | **94.4** | 98.3 | **98.1** | **95.3** | **99.6** | 83.1 | **92.0** | **94.9** | **97.3** |
+| v9 | 89.2 | 93.9 | **98.6** | 97.7 | **95.8** | 99.0 | **83.6** | 91.2 | **94.9** | 94.7 |
 
 Wrong messages by first failing field, out of 518:
 
@@ -113,6 +115,7 @@ Wrong messages by first failing field, out of 518:
 | v6 | 74 | 9 | 3 | 10 | 52 | gift to other 6, salary to other 6, food to grocery 5 |
 | v7 | 69 | 15 | 4 | 9 | 41 | salary to other 6, grocery to shopping 4 |
 | v8 | **54** | 9 | 1 | 4 | 40 | entertainment to other 4, tuition to other 4 |
+| v9 | 56 | 7 | 5 | 8 | 36 | tuition to other 5, salary to other 4, other to tuition 3 |
 
 Category is two-thirds of every version's errors, and most of those swaps are cases where the
 Gemini gold disagrees with itself (ERROR_ANALYSIS.md). That is why test exact sits near 86 to 88
@@ -126,6 +129,7 @@ regardless of data.
 | v6 | 81.8 | 87.2 | **100.0** | **99.7** | 88.1 | **98.8** | 79.2 | 76.4 | **88.9** | **89.2** |
 | v7 | 77.6 | 84.1 | 99.4 | 99.2 | 86.8 | 96.5 | 75.8 | 74.2 | 82.2 | 82.4 |
 | v8 | **84.9** | **89.2** | 99.7 | 98.9 | **90.8** | **98.8** | **81.9** | **86.5** | **88.9** | 86.5 |
+| v9 | 83.2 | 87.4 | **100.0** | **99.7** | 88.8 | **98.8** | 80.5 | 84.3 | 84.4 | **86.5** |
 
 Wrong messages by first failing field, out of 357:
 
@@ -135,6 +139,7 @@ Wrong messages by first failing field, out of 357:
 | v6 | 65 | 0 | 1 | 7 | 57 | gift to shopping 9, gift to other 8 |
 | v7 | 80 | 2 | 1 | 20 | 57 | gift to shopping 8, other to shopping 6, other to tuition 6 |
 | v8 | **54** | 1 | 3 | 7 | 43 | gift to shopping 8, other to shopping 7 |
+| v9 | 60 | 0 | 1 | 5 | 54 | gift to shopping 9, other to transport 7, other to shopping 6 |
 
 From v6 on, the model reads spelled-out amounts almost perfectly at full precision. What is left
 is category convention, plus v7's 20 income/expense flips.
@@ -151,6 +156,7 @@ Test set:
 | v6 | | 84.7 | 84.4 | 84.6 | 83.6 | | | | | |
 | v7 | | | 86.1 | 84.6 | 84.6 | | | | | |
 | v8 | | | **89.2** | **88.2** | **88.6** | | | | | |
+| v9 | 89.0 | **89.6** | **89.2** | **89.4** | **89.6** | | | | | |
 
 Numbers set:
 
@@ -159,6 +165,7 @@ Numbers set:
 | v6 | 76.2 | 75.9 | **76.8** | 73.9 | 73.9 | 73.1 |
 | v7 | | | | 73.9 | 72.3 | 74.5 |
 | v8 | | | | **80.1** | **80.7** | **80.1** |
+| v9 | 83.2 (HF) | 83.2 | 82.9 | **83.8** | **84.0** | **84.0** |
 
 File sizes: F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
 Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and output at Q8_0, add
@@ -175,17 +182,19 @@ Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and outpu
 | v7 | Q6_K GGUF | 75.8 | 56.2 | 84.4 | 85.1 |
 | v8 | bf16 on HF | 81.9 | **86.5** | 88.9 | 86.5 |
 | v8 | Q6_K GGUF | 81.2 | **70.8** | 88.9 | 83.8 |
+| v9 | bf16 on HF | 80.5 | 84.3 | 84.4 | 86.5 |
+| v9 | Q6_K GGUF | 81.2 | **84.3** | 84.4 | 87.8 |
+| v9 | Q4_K_M-imat GGUF | 80.5 | **86.5** | 84.4 | 87.8 |
 
-Banglish is the same on both paths. Bangla drops about 17 points even in BF16 GGUF, which has the
-same weights as HF, so the cause is llama.cpp's handling of Qwen3.5 rather than quantization.
-Typical failure: "নয় হাজার পাঁচশো" read as 950. NFC normalisation is applied in the app and the
-eval, but it did not close the gap.
+Through v8, Banglish was the same on both paths while Bangla dropped about 17 points even in
+BF16 GGUF, which has the same weights as HF. The cause was not llama.cpp: transformers 5.10.2's
+`Qwen2Tokenizer` ignores the `[\p{L}\p{M}]+` rule in Qwen3.5's tokenizer.json and splits Bengali
+words at their combining marks, so v3..v8 trained on a tokenization the phone never produces
+(see v9). With the faithful tokenizer, v9's GGUF Bangla matches bf16 exactly at Q6_K and beats
+it at Q4_K_M-imat. The earlier note that "tokenization is identical" compared llama.cpp with the
+`tokenizers` library, which agree with each other; the odd one out was transformers.
 
-**The tokenizer is not the cause.** llama.cpp's tokenizer (built from kiln's pinned commit) and
-the HF tokenizer produce identical token IDs for all 875 test and numbers messages. The gap
-is in the forward pass. v8 narrows it from about 24 points to 16, but does not remove it.
-
-**A GGUF-only output glitch.** v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows. In each one
+**A GGUF-only output glitch.** v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows (v9: Q6_K 0, Q4_K_M-imat 1). In each one
 the description contains a number word and the output jumps straight into digits, skipping the
 `","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never
 does this. The app's lenient parser drops such entries, so the user would see a missing line.
@@ -287,7 +296,15 @@ category because the entry silently disappears.
   defect at bf16 because it was evaluated with the same tokenizer it trained on). GGUF: test Q6_K
   89.2, Q5_K_M 89.4, Q4_K_M-imat 89.6; numbers Q6_K **83.8**, Q5_K_M 84.0, Q4_K_M-imat 84.0.
   Bangla numbers: bf16 84.3, Q6_K 84.3, Q4_K_M-imat 86.5 (v8 Q6_K was 70.8). The phone path and
-  the HF path now agree, and Q4_K_M-imat (529 MB) is as good as Q6_K.
+  the HF path now agree.
+- **Q4_K_M-imat is now the best quant, not the worst.** Across v3..v8, 4-bit lost 1 to 4 points to
+  Q6_K; in v9 Q4_K_M-imat is 0.4 ahead on test and 0.2 ahead on numbers, within noise of Q6_K
+  and of bf16 (one test row is 0.19 points, one numbers row 0.28). Two reasons: the imatrix is
+  computed on rendered training text, which is now tokenized the same way the quantized model
+  will see at inference, so its importance weights land on the right rows; and the Bangla
+  token sequences are 30 to 40% shorter, so there is less low-precision drift per message. The
+  old 4-bit penalty was partly the tokenizer defect compounding with quantization noise. Ship
+  Q4_K_M-imat (529 MB) unless the phone probes say otherwise.
 - **Published:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v9` and `...-v9-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat).
 - **Lesson:** verify token ids end to end (training tokenizer vs `tokenizers` vs llama.cpp) before
   trusting any GGUF number; `load_tokenizer` now asserts it on a Bangla probe at every run.
