@@ -59,10 +59,11 @@ def load_split(name: str) -> list[dict]:
 
 
 def eval_splits(eval_limit: int = 0) -> dict[str, list[dict]]:
-    """validation + test, plus any extra held-out slices present in /splits (numbers.jsonl:
-    digit-free spelled amounts, never trained on)."""
+    """validation + test, plus any extra held-out slices present in /splits: numbers.jsonl (digit-free
+    spelled amounts, never trained on) and test_clean / numbers_clean (rows where two frontier labellers
+    agree with each other under docs/LABELLING_GUIDELINE.md; see ml/data/relabel_merge.py)."""
     out = {"validation": load_split("validation"), "test": load_split("test")}
-    for extra in ("numbers",):
+    for extra in ("numbers", "test_clean", "numbers_clean"):
         if (Path(DATA_DIR) / "splits" / f"{extra}.jsonl").exists():
             out[extra] = load_split(extra)
     if eval_limit:

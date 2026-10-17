@@ -56,12 +56,14 @@ ITEMS
 """
 
 
-def load_rows(splits: list[str]) -> list[dict]:
+def load_rows(splits: list[str], sources: list[str] | None = None) -> list[dict]:
     rows = []
     for s in splits:
         for line in (SPLITS / f"{s}.jsonl").read_text(encoding="utf-8").splitlines():
             if line.strip():
                 r = json.loads(line)
+                if sources and r.get("source") not in sources:
+                    continue
                 rows.append({"id": r["id"], "split": s, "instruction": r["instruction"]})
     return rows
 
@@ -123,6 +125,7 @@ def already(out: Path) -> set[str]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--splits", nargs="+", default=["test", "numbers"])
+    ap.add_argument("--sources", nargs="*", default=None, help="only rows whose `source` is in this list (e.g. base hard)")
     ap.add_argument("--labeller", choices=["agy"], default="agy")
     ap.add_argument("--model", default="gemini-3.8-flash-high")
     ap.add_argument("--batch", type=int, default=20)
@@ -135,7 +138,7 @@ def main() -> None:
     ap.add_argument("--tag", default="", help="labeller name written into rows (default: model)")
     args = ap.parse_args()
 
-    rows = load_rows(args.splits)
+    rows = load_rows(args.splits, args.sources)
     if args.limit:
         rows = rows[: args.limit]
     if args.shard:
