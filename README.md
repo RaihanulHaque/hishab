@@ -26,28 +26,28 @@ run on device through [kiln](https://github.com/RaihanulHaque/kiln) (llama.cpp o
 | `docs/` | historical design notes |
 | `CLAUDE.md` | working notes for coding agents: environment, invariants, commands |
 
-## Current state (2026-10-15)
+## Current state (2026-10-17)
 
-Eight fine-tunes (Qwen3.5-0.8B, LFM2.5-350M, LFM2.5-1.2B, Gemma-3-270M; two output formats)
-were trained on a clean, de-duplicated split and evaluated on 518 held-out rows, then each
-candidate was quantized up to eleven ways and re-evaluated with llama.cpp at kiln's pinned
-commit. The two best configurations were then retrained on 9.5k rows (v3 + 5k programmatic
-Banglish/Bangla rows + 155 hand-written rows; see `ml/README.md`) as `v4` / `v5`.
+Shipping line: `Qwen/Qwen3.5-0.8B`, JSON-only output, full fine-tune on 20,057 rows (v10,
+dataset `ryuma007/hishab-synthetic-v5`). Held-out scores, exact = the set of (amount, category,
+type) matches gold. `test_clean` / `numbers_clean` are the test / numbers rows where two
+independent labellers agree, with their label as gold; they are the headline numbers from v10 on.
 
-Best full-precision model: **Qwen3.5-0.8B, JSON-only output, v5**: 88.2% exact transaction
-match (Banglish 84.0%), published as
-[`ryuma007/hishab-qwen3.5-0.8b-json-lora-v5`](https://huggingface.co/ryuma007/hishab-qwen3.5-0.8b-json-lora-v5)
-(merged bf16 safetensors). On the phone, pick a quant by size budget:
+| build | MB | test_clean | numbers_clean | test (old labels) | numbers (old labels) | phone probes | notes |
+|---|---|---|---|---|---|---|---|
+| v10 bf16 (HF) | | 92.2 | 78.9 | 80.3 | 85.2 | | `ryuma007/hishab-qwen3.5-0.8b-json-full-v10` |
+| v10 Q6_K | 630 | 93.1 | 79.2 | 81.1 | 85.2 | 18/20 | `...-v10-GGUF` |
+| v10 Q4_K_M-imat | 529 | 93.1 | 79.2 | 81.1 | 85.4 | 18/20 | `...-v10-GGUF`, recommended phone build |
+| v9 Q4_K_M-imat | 529 | 83.6 (bf16) | 79.5 (bf16) | 89.6 | 84.0 | 17/20 | previous release |
 
-| GGUF | MB | exact | notes |
-|---|---|---|---|
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q6_K | 630 | 86.5 | **recommended**: in kiln it got 5/6 hard Banglish probes, Q4_K_M-imat got 3/6 |
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q4_K_M-imat | 529 | 84.6 | smallest Qwen build; loses spelled-out numbers and loan direction |
-| `hishab-lfm2.5-350m-two-phase-lora-v4-GGUF` Q5_K_M | 260 | 84.7 | fast tier, 3x faster |
-
-The 518-row test set has a label-noise ceiling near 90%: most remaining misses are
-convention disagreements inside the Gemini-generated gold (`ml/results/ERROR_ANALYSIS.md`).
-Per-language and per-quant tables are in [`ml/results/RESULTS.md`](ml/results/RESULTS.md).
+v10 retrains v9's recipe after relabelling the 4,409 Gemini-written train rows with two
+frontier labellers against `docs/LABELLING_GUIDELINE.md` (`ml/data/relabel.py`,
+`ml/data/apply_relabel.py`, `ml/results/RELABEL.md`). It drops on the old `test` labels by
+design, because those break the guideline on about 14% of rows. v9 fixed the training
+tokenizer (`ml/modal_app/hfeval.load_tokenizer`), which closed the GGUF Bangla gap. The full
+history, data and dataset version per model, and lessons are in
+[`ml/results/EXPERIMENTS.md`](ml/results/EXPERIMENTS.md). Next: the Codex-template rows' income
+and gift categories still disagree with the guideline (`numbers_clean`).
 
 ## Setup
 

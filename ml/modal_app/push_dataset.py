@@ -1,6 +1,10 @@
 """Publish the clean splits as a Hugging Face dataset (runs in Modal, where the HF token lives).
 
-  conda run -n ML modal run ml/modal_app/push_dataset.py [--repo ryuma007/hishab-synthetic-v4]
+  conda run -n ML modal run ml/modal_app/push_dataset.py [--repo ryuma007/hishab-synthetic-v5] [--train-split train_v10]
+
+Dataset versions: v3 = the 4,409-row Gemini train set (model v3), v4 = the 20,333-row set
+(models v7, v8, v9), v5 = v4 with the Gemini rows relabelled by two labellers plus the
+`test_clean` / `numbers_clean` splits (model v10).
 """
 from __future__ import annotations
 
@@ -22,15 +26,13 @@ size_categories: [10K<n<100K]
 # {repo_name}
 
 Bangladeshi personal-finance messages (English, Bangla, Banglish, mixed) paired with the
-structured transactions they describe. Successor of `ryuma007/hishab-synthetic-v3`: same
-validation and test splits, a much larger train split, and a new `numbers` split.
+structured transactions they describe.
+
+{history}
 
 | split | rows | what it is |
 |---|---|---|
-| train | {train} | everything below |
-| validation | {validation} | held out, for picking the best epoch |
-| test | {test} | held out, Gemini-generated, same as v3 |
-| numbers | {numbers} | held out, every amount spelled out in words ("der hajar", "পনেরো হাজার"); never train on it |
+{split_rows}
 
 Train rows by source:
 
@@ -43,14 +45,40 @@ are never an entry, questions and plans are `[]`):
 https://github.com/RaihanulHaque/hishab/blob/main/docs/LABELLING_GUIDELINE.md
 
 Columns: `id`, `language`, `complexity`, `source`, `instruction`, `translation` (English),
-`transactions` (JSON string: list of `{{description, amount, category, type}}`).
+`transactions` (JSON string: list of `{{description, amount, category, type}}`), `label_source`
+(`original`: the row's own label; `gold`: two independent labellers confirmed the original;
+`gemini-3.8-flash`: both labellers agreed on a different label, which replaced it).
 
 Categories: food, grocery, rent, utilities, mobile_recharge, transport, tuition, salary, gift,
 loan, shopping, medical, entertainment, other. Type: income | expense. Amounts in BDT.
 
-All rows are synthetic. Models trained on it: `ryuma007/hishab-qwen3.5-0.8b-json-full-v8`
-(and its `-GGUF` repo).
+All rows are synthetic. Models trained on it: {models}.
 """
+
+SPLIT_DOC = {
+    "train": "everything below",
+    "validation": "held out, for picking the best epoch (original labels)",
+    "test": "held out, Gemini-generated, original labels (same rows since v3)",
+    "test_clean": "the `test` rows where two independent labellers agree; their label is the gold. Use this one",
+    "numbers": "held out, every amount spelled out in words (\"der hajar\", \"পনেরো হাজার\"); never train on it",
+    "numbers_clean": "the `numbers` rows where the two labellers agree",
+}
+
+HISTORY = {
+    "ryuma007/hishab-synthetic-v4": "Successor of `ryuma007/hishab-synthetic-v3`: same validation and test splits, a much "
+                                    "larger train split, and a new `numbers` split.",
+    "ryuma007/hishab-synthetic-v5": "Successor of `ryuma007/hishab-synthetic-v4`. The 4,409 Gemini-written train rows "
+                                    "(`source` base / hard) were relabelled from scratch by Gemini 3.8 Flash and Claude "
+                                    "Sonnet 5.5 against the guideline: 3,285 confirmed, 848 replaced by the agreed label, "
+                                    "276 dropped where the two disagree. The test and numbers splits were relabelled the "
+                                    "same way into `test_clean` (476 rows) and `numbers_clean` (317); the original splits "
+                                    "are kept for comparison with older models.",
+}
+
+MODELS = {
+    "ryuma007/hishab-synthetic-v4": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v8` and `-v9` (and their `-GGUF` repos)",
+    "ryuma007/hishab-synthetic-v5": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v10` (and its `-GGUF` repo)",
+}
 
 SOURCES = {
     "base": "Gemini-generated messages, deduplicated",
@@ -67,16 +95,19 @@ SOURCES = {
 
 
 @app.function(image=train_image, volumes=VOLUMES, secrets=[hf_secret], timeout=1800)
-def push(repo: str) -> str:
+def push(repo: str, train_split: str = "train") -> str:
     from datasets import Dataset, DatasetDict
     from huggingface_hub import HfApi
 
     splits = {}
-    for name in ("train", "validation", "test", "numbers"):
-        p = Path(DATA_DIR) / "splits" / f"{name}.jsonl"
+    for name in ("train", "validation", "test", "test_clean", "numbers", "numbers_clean"):
+        p = Path(DATA_DIR) / "splits" / f"{train_split if name == 'train' else name}.jsonl"
+        if not p.exists():
+            continue
         rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
         for r in rows:  # keep transactions as a JSON string: stable schema for Arrow
             r["transactions"] = json.dumps(r["transactions"], ensure_ascii=False)
+            r["label_source"] = r.get("label_source") or "original"
         splits[name] = Dataset.from_list(rows)
     from collections import Counter
     counts = Counter(splits["train"]["source"])
@@ -84,13 +115,14 @@ def push(repo: str) -> str:
     ds = DatasetDict(splits)
     ds.push_to_hub(repo, private=False)
     HfApi().upload_file(
-        path_or_fileobj=CARD.format(repo_name=repo.split("/")[-1], sources=sources,
-                                    **{k: len(v) for k, v in splits.items()}).encode(),
+        path_or_fileobj=CARD.format(repo_name=repo.split("/")[-1], sources=sources, history=HISTORY.get(repo, ""),
+                                    models=MODELS.get(repo, "see the Hishab repo"),
+                                    split_rows="\n".join(f"| {k} | {len(v):,} | {SPLIT_DOC[k]} |" for k, v in splits.items())).encode(),
         path_in_repo="README.md", repo_id=repo, repo_type="dataset",
     )
     return f"https://huggingface.co/datasets/{repo}"
 
 
 @app.local_entrypoint()
-def main(repo: str = "ryuma007/hishab-synthetic-v4"):
-    print(push.remote(repo))
+def main(repo: str = "ryuma007/hishab-synthetic-v5", train_split: str = "train_v10"):
+    print(push.remote(repo, train_split))

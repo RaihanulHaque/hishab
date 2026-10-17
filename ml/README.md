@@ -19,7 +19,7 @@ ml/
 │   ├── common.py      Modal app, volumes (hishab-data, hishab-runs, hishab-hf-cache), images
 │   ├── train.py       TRL SFT (LoRA or full) per (model, format), then bf16 eval on val + test
 │   ├── gguf.py        HF -> F16 GGUF -> imatrix -> many quants -> llama-server eval of each
-│   ├── push_dataset.py  publish splits to HF as ryuma007/hishab-synthetic-v3
+│   ├── push_dataset.py  publish splits to HF (v5: --train-split train_v10)
 │   ├── push_model.py    publish a run's merged bf16 weights + card as ryuma007/hishab-<run>
 │   └── report.py      aggregate every eval json into ml/results/RESULTS.md
 ├── datasets/          raw synthetic data, splits, pretraining corpus

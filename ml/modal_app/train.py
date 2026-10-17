@@ -26,24 +26,7 @@ from modal_app.common import DATA_DIR, RUNS_DIR, VOLUMES, app, hf_secret, train_
 with train_image.imports():
     import torch
 
-MAX_NEW_TOKENS = {"json": 192, "two_phase": 320}
-
-
-def load_split(name: str) -> list[dict]:
-    p = Path(DATA_DIR) / "splits" / f"{name}.jsonl"
-    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
-
-
-def eval_splits(eval_limit: int = 0) -> dict[str, list[dict]]:
-    """validation + test, plus any extra held-out slices present in /splits (numbers.jsonl:
-    digit-free spelled amounts, never trained on)."""
-    out = {"validation": load_split("validation"), "test": load_split("test")}
-    for extra in ("numbers",):
-        if (Path(DATA_DIR) / "splits" / f"{extra}.jsonl").exists():
-            out[extra] = load_split(extra)
-    if eval_limit:
-        out = {k: v[:eval_limit] for k, v in out.items()}
-    return out
+from modal_app.hfeval import MAX_NEW_TOKENS, eval_splits, generate_all, load_split, load_tokenizer, run_eval  # noqa: E402,F401
 
 
 def to_prompt_completion(rows: list[dict], fmt: str) -> list[dict]:
@@ -75,35 +58,6 @@ def check_template(tokenizer, example: dict) -> dict:
     return {"generation_prompt_tail": gen[-80:], "completion_head": full[len(gen):][:80]}
 
 
-@torch.inference_mode()
-def generate_all(model, tokenizer, rows: list[dict], fmt: str, batch_size: int = 32) -> tuple[list[str], float]:
-    from hishab.prompts import build_messages
-
-    tokenizer.padding_side = "left"
-    preds: list[str] = []
-    n_tokens = 0
-    t0 = time.time()
-    for i in range(0, len(rows), batch_size):
-        batch = rows[i : i + batch_size]
-        texts = [
-            tokenizer.apply_chat_template(build_messages(fmt, r["instruction"]), tokenize=False, add_generation_prompt=True)
-            for r in batch
-        ]
-        enc = tokenizer(texts, return_tensors="pt", padding=True, add_special_tokens=False).to(model.device)
-        out = model.generate(
-            **enc,
-            max_new_tokens=MAX_NEW_TOKENS[fmt],
-            do_sample=False,
-            pad_token_id=tokenizer.pad_token_id,
-        )
-        gen = out[:, enc["input_ids"].shape[1] :]
-        for g in gen:
-            n_tokens += int((g != tokenizer.pad_token_id).sum())
-        preds += [t.strip() for t in tokenizer.batch_decode(gen, skip_special_tokens=True)]
-        print(f"  generated {min(i + batch_size, len(rows))}/{len(rows)}", flush=True)
-    return preds, n_tokens / max(len(rows), 1)
-
-
 @app.function(
     image=train_image,
     gpu="A100-80GB",
@@ -124,6 +78,7 @@ def train(
     eval_limit: int = 0,
     train_limit: int = 0,
     tag: str = "",
+    train_split: str = "train",
 ) -> dict:
     from datasets import Dataset
     from peft import LoraConfig
@@ -140,7 +95,7 @@ def train(
     lr = lr if lr is not None else (2e-4 if tune == "lora" else 3e-5)
     print(f"### {name}: {spec['hf_id']} fmt={fmt} tune={tune} epochs={epochs} lr={lr}")
 
-    train_rows, val_rows, test_rows = load_split("train"), load_split("validation"), load_split("test")
+    train_rows, val_rows, test_rows = load_split(train_split), load_split("validation"), load_split("test")
     if train_limit:
         train_rows = train_rows[:train_limit]
     if eval_limit:
@@ -148,9 +103,7 @@ def train(
     train_ds = Dataset.from_list(to_prompt_completion(train_rows, fmt))
     val_ds = Dataset.from_list(to_prompt_completion(val_rows, fmt))
 
-    tokenizer = AutoTokenizer.from_pretrained(spec["hf_id"])
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = load_tokenizer(spec["hf_id"])
     template_info = check_template(tokenizer, train_ds[0])
 
     model = AutoModelForCausalLM.from_pretrained(spec["hf_id"], dtype=torch.bfloat16, device_map="cuda")
@@ -259,24 +212,6 @@ def train(
     return results
 
 
-def run_eval(model, tokenizer, name, fmt, out_dir, results, splits, batch_size):
-    from hishab.metrics import evaluate
-
-    for split, rows in splits.items():
-        print(f"--- generating on {split} ({len(rows)} rows, batch {batch_size})")
-        preds, avg_tok = generate_all(model, tokenizer, rows, fmt, batch_size=batch_size)
-        metrics = evaluate(rows, preds)
-        metrics["avg_completion_tokens"] = round(avg_tok, 1)
-        results["splits"][split] = metrics
-        with (out_dir / f"preds_{split}.jsonl").open("w", encoding="utf-8") as f:
-            for r, p in zip(rows, preds):
-                f.write(json.dumps({"id": r["id"], "language": r["language"], "instruction": r["instruction"],
-                                    "gold": r["transactions"], "pred": p}, ensure_ascii=False) + "\n")
-        print(f"{name} {split}: exact={metrics['all']['exact_match']:.3f} f1={metrics['all']['tx_f1']:.3f} "
-              f"valid={metrics['all']['valid_json']:.3f} avg_tok={avg_tok:.0f}")
-    (out_dir / "eval_hf.json").write_text(json.dumps(results, indent=1, ensure_ascii=False))
-
-
 @app.function(image=train_image, gpu="A10G", timeout=2 * 60 * 60, volumes=VOLUMES, secrets=[hf_secret])
 def eval_hf(run: str, eval_limit: int = 0) -> dict:
     """Re-score an existing merged run (bf16, greedy) without retraining."""
@@ -287,9 +222,7 @@ def eval_hf(run: str, eval_limit: int = 0) -> dict:
     out_dir = Path(RUNS_DIR) / run
     results = json.loads((out_dir / "eval_hf.json").read_text())
     spec = MODELS[results["model_key"]]
-    tokenizer = AutoTokenizer.from_pretrained(str(out_dir / "merged"))
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = load_tokenizer(str(out_dir / "merged"))
     model = AutoModelForCausalLM.from_pretrained(str(out_dir / "merged"), dtype=torch.bfloat16, device_map="cuda").eval()
     run_eval(model, tokenizer, run, results["fmt"], out_dir, results, eval_splits(eval_limit),
              spec.get("eval_batch_size", 32))
@@ -315,6 +248,7 @@ def main(
     train_limit: int = 0,
     eval_only: str = "",
     tag: str = "",
+    train_split: str = "train",
 ):
     if eval_only:
         for r in eval_hf.map([x.strip() for x in eval_only.split(",") if x.strip()], kwargs={"eval_limit": eval_limit}):
@@ -325,7 +259,7 @@ def main(
     print(f"launching {len(jobs)} runs: {jobs}")
     handles = {
         (m, f): train.spawn(m, f, tune=tune, epochs=epochs, lr=lr, lora_r=lora_r, max_steps=max_steps,
-                            eval_limit=eval_limit, train_limit=train_limit, tag=tag)
+                            eval_limit=eval_limit, train_limit=train_limit, tag=tag, train_split=train_split)
         for m, f in jobs
     }
     summary = []

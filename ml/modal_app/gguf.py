@@ -294,12 +294,13 @@ other), `type` (income | expense). An empty array means no transaction.
 {format_note}
 ## Files
 
-Evaluated with llama.cpp (greedy) on held-out splits of `{dataset}`: *test* (518 rows, all four
-languages) and *numbers* (357 rows where every amount is spelled out in words, like "der hajar" or
-"পনেরো হাজার"). *exact* = the set of (amount, category, type) tuples equals the gold set.
-
-| file | size | test exact | test tuple F1 | valid JSON | banglish exact | numbers exact |
-|---|---|---|---|---|---|---|
+Evaluated with llama.cpp (greedy) on held-out splits of [`{dataset}`](https://huggingface.co/datasets/{dataset}):
+*test* (518 rows, all four languages) and *numbers* (357 rows where every amount is spelled out in
+words, like "der hajar" or "পনেরো হাজার"). *exact* = the set of (amount, category, type) tuples
+equals the gold set; F1 is micro F1 over those tuples.
+{clean_note}
+| file | size | {header} |
+|---|---|{header_sep}
 {rows}
 
 ## Training
@@ -325,6 +326,13 @@ Trained on synthetic data only; expect lower accuracy on real messages until a h
 test set exists.
 """
 
+CLEAN_NOTE = """
+*test_clean* (476) and *numbers_clean* (317) are the rows where two independent labellers (Gemini 3.8
+Flash and Claude Sonnet 5.5, following the labelling guideline) agree, with their label as the gold.
+They are the headline numbers: the original *test* labels break the guideline on about 14% of rows,
+so models trained on guideline-consistent data score lower on *test* by design.
+"""
+
 
 def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> tuple[str, list[str]]:
     from hishab.prompts import system_prompt
@@ -333,21 +341,22 @@ def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> t
     gdir = Path(RUNS_DIR) / run / "gguf"
     edir = Path(RUNS_DIR) / run / "eval_gguf"
     rows, files = [], []
+    clean = any(edir.glob("*.test_clean.json"))
+    cols = ([("test_clean", "exact_match"), ("test_clean", "tx_f1"), ("numbers_clean", "exact_match")] if clean else []) + \
+           [("test", "exact_match"), ("test", "tx_f1"), ("test", "valid_json"), ("numbers", "exact_match")]
+    names = {("test_clean", "exact_match"): "**test_clean exact**", ("test_clean", "tx_f1"): "test_clean F1",
+             ("numbers_clean", "exact_match"): "**numbers_clean exact**", ("test", "exact_match"): "test exact",
+             ("test", "tx_f1"): "test F1", ("test", "valid_json"): "valid JSON", ("numbers", "exact_match"): "numbers exact"}
     for f in sorted(gdir.glob(f"{run}-*.gguf"), key=lambda p: p.stat().st_size):
         quant = f.name[len(run) + 1 : -len(".gguf")]
         if only and quant not in only:
             continue
         files.append(f.name)
-        ev, nv = edir / f"{quant}.test.json", edir / f"{quant}.numbers.json"
-        num = f"{100 * json.loads(nv.read_text())['metrics']['all']['exact_match']:.1f}" if nv.exists() else "-"
-        if ev.exists():
-            e = json.loads(ev.read_text())
-            a = e["metrics"]["all"]
-            bl = e["metrics"]["by_language"].get("banglish", {}).get("exact_match")
-            rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | {100 * a['exact_match']:.1f} | "
-                        f"{100 * a['tx_f1']:.1f} | {100 * a['valid_json']:.1f} | {100 * bl:.1f} | {num} |")
-        else:
-            rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | - | - | - | - | {num} |")
+        cells = []
+        for split, key in cols:
+            ev = edir / f"{quant}.{split}.json"
+            cells.append(f"{100 * json.loads(ev.read_text())['metrics']['all'][key]:.1f}" if ev.exists() else "-")
+        rows.append(f"| `{f.name}` | {f.stat().st_size / 1e6:.0f} MB | " + " | ".join(cells) + " |")
     fmt = meta["fmt"]
     example = ('[{"description":"tuition fee","amount":5000.0,"category":"tuition","type":"expense"},'
                '{"description":"rickshaw","amount":80.0,"category":"transport","type":"expense"},'
@@ -365,7 +374,8 @@ def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> t
                     f"projections of `{meta['hf_id']}`, {meta['epochs']:g} epochs, merged after training")
     card = MODEL_CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, lr=meta["lr"],
                              train_rows=meta["train_rows"], repo_name=repo.split("/")[-1], example_output=example,
-                             format_note=note, rows="\n".join(rows), first_file=files[0] if files else "<file>",
+                             format_note=note, rows="\n".join(rows), header=" | ".join(names[c] for c in cols),
+                             header_sep="---|" * len(cols), clean_note=CLEAN_NOTE if clean else "", first_file=files[0] if files else "<file>",
                              system_prompt=system_prompt(fmt).replace('"', "'"))
     return card, files
 
@@ -386,19 +396,20 @@ def push_ggufs(run: str, only: list[str] | None = None, repo_prefix: str = "ryum
     api.upload_file(path_or_fileobj=card.encode(), path_in_repo="README.md", repo_id=repo)
     edir = Path(RUNS_DIR) / run / "eval_gguf"
     if edir.exists():
-        api.upload_folder(folder_path=str(edir), repo_id=repo, path_in_repo="eval", allow_patterns=["*.test.json", "*.numbers.json"])
+        api.upload_folder(folder_path=str(edir), repo_id=repo, path_in_repo="eval", allow_patterns=[f"{q}.*.json" for q in (only or ["*"])])
     return f"https://huggingface.co/{repo}"
 
 
 @app.local_entrypoint()
 def main(runs: str, quants: str = DEFAULT_QUANTS, split: str = "test", limit: int = 0, push: bool = False,
-         skip_eval: bool = False, force: bool = False, push_only: str = "", only_push: bool = False):
+         skip_eval: bool = False, force: bool = False, push_only: str = "", only_push: bool = False,
+         dataset: str = "ryuma007/hishab-synthetic-v4"):
     """--only-push skips conversion/eval and just publishes; --push-only lists the quants to upload."""
     run_list = [r.strip() for r in runs.split(",") if r.strip()]
     only = [q.strip() for q in push_only.split(",") if q.strip()] or None
     if only_push:
         for r in run_list:
-            print("pushed:", push_ggufs.remote(r, only=only))
+            print("pushed:", push_ggufs.remote(r, only=only, dataset=dataset))
         return
     qs = [q.strip() for q in quants.split(",") if q.strip()]
     sizes = dict(zip(run_list, make_ggufs.map(run_list, [qs] * len(run_list), kwargs={"force": force})))
@@ -412,4 +423,4 @@ def main(runs: str, quants: str = DEFAULT_QUANTS, split: str = "test", limit: in
                   f"{a['tx_f1']:.3f} | {a['valid_json']:.3f} | {res['truncated']} | {res['gen_tok_per_s_per_slot']}")
     if push:
         for r in run_list:
-            print("pushed:", push_ggufs.remote(r, only=only))
+            print("pushed:", push_ggufs.remote(r, only=only, dataset=dataset))
