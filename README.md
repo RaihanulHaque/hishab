@@ -26,28 +26,25 @@ run on device through [kiln](https://github.com/RaihanulHaque/kiln) (llama.cpp o
 | `docs/` | historical design notes |
 | `CLAUDE.md` | working notes for coding agents: environment, invariants, commands |
 
-## Current state (2026-10-15)
+## Current state (2026-10-17)
 
-Eight fine-tunes (Qwen3.5-0.8B, LFM2.5-350M, LFM2.5-1.2B, Gemma-3-270M; two output formats)
-were trained on a clean, de-duplicated split and evaluated on 518 held-out rows, then each
-candidate was quantized up to eleven ways and re-evaluated with llama.cpp at kiln's pinned
-commit. The two best configurations were then retrained on 9.5k rows (v3 + 5k programmatic
-Banglish/Bangla rows + 155 hand-written rows; see `ml/README.md`) as `v4` / `v5`.
+Shipping line: `Qwen/Qwen3.5-0.8B`, JSON-only output, full fine-tune on 20,333 rows (v9).
+Held-out scores (518-row `test`, 357-row digit-free `numbers` split; exact = the set of
+(amount, category, type) matches gold):
 
-Best full-precision model: **Qwen3.5-0.8B, JSON-only output, v5**: 88.2% exact transaction
-match (Banglish 84.0%), published as
-[`ryuma007/hishab-qwen3.5-0.8b-json-lora-v5`](https://huggingface.co/ryuma007/hishab-qwen3.5-0.8b-json-lora-v5)
-(merged bf16 safetensors). On the phone, pick a quant by size budget:
+| build | MB | test | numbers | notes |
+|---|---|---|---|---|
+| v9 bf16 (HF) | | 89.2 | 83.2 | `ryuma007/hishab-qwen3.5-0.8b-json-full-v9` |
+| v9 Q6_K | 630 | 89.2 | 83.8 | `...-v9-GGUF`, recommended phone build |
+| v9 Q4_K_M-imat | 529 | 89.6 | 84.0 | smallest; now as good as Q6_K |
 
-| GGUF | MB | exact | notes |
-|---|---|---|---|
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q6_K | 630 | 86.5 | **recommended**: in kiln it got 5/6 hard Banglish probes, Q4_K_M-imat got 3/6 |
-| `hishab-qwen3.5-0.8b-json-lora-v5-GGUF` Q4_K_M-imat | 529 | 84.6 | smallest Qwen build; loses spelled-out numbers and loan direction |
-| `hishab-lfm2.5-350m-two-phase-lora-v4-GGUF` Q5_K_M | 260 | 84.7 | fast tier, 3x faster |
-
-The 518-row test set has a label-noise ceiling near 90%: most remaining misses are
-convention disagreements inside the Gemini-generated gold (`ml/results/ERROR_ANALYSIS.md`).
-Per-language and per-quant tables are in [`ml/results/RESULTS.md`](ml/results/RESULTS.md).
+v9 is v8 with one fix: training now tokenizes with `tokenizer.json`'s own backend
+(`ml/modal_app/hfeval.load_tokenizer`). transformers 5 was splitting Bengali words at their
+combining marks, so v3..v8 trained on tokens the phone never produces; their GGUFs lost up to
+16 points on Bangla-script numbers. The full history, data mix and lessons per version are in
+[`ml/results/EXPERIMENTS.md`](ml/results/EXPERIMENTS.md); the remaining test errors are mostly
+label-convention noise in the Gemini gold (`ml/results/ERROR_ANALYSIS.md`,
+`docs/LABELLING_GUIDELINE.md`), and a relabelled test set is in progress (`ml/data/relabel.py`).
 
 ## Setup
 

@@ -4,7 +4,7 @@ Every training version of the shipping model line: Qwen3.5-0.8B, `json` output. 
 this file records the data, the training setup, every score we have, the error breakdown and
 what we learned. `RESULTS.md` has the other base models (LFM2.5, Gemma) and `two_phase` runs.
 
-Last updated 2026-10-17 03:40. Overnight pipeline finished.
+Last updated 2026-10-17 (evening). v9 closes the GGUF Bangla gap.
 
 ## How to read the numbers
 
@@ -34,7 +34,8 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v5 | 9,564 | **88.2** | **86.5** | 13.4 | n/a | 6/20 | **shipped in hishab_offline** |
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
-| v8 | 20,333 | **89.6** | **89.2** | **84.9** | **80.1** | **18/20** | **full fine-tune; best everywhere, ship candidate** |
+| v8 | 20,333 | **89.6** | 89.2 | **84.9** | 80.1 | **18/20** | full fine-tune; trained with the mis-tokenizing transformers-5 tokenizer |
+| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | pending | **v8 recipe with the faithful tokenizer; GGUF now equals bf16, ship candidate** |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -268,9 +269,32 @@ category because the entry silently disappears.
 - **Cost:** per step, the full fine-tune (1.64 s) ran about as fast as LoRA v7 (1.77 s). LoRA saves little on this model because a third of its weights are the 248k-token output layer, which costs the same either way. v8 was cheaper than v7 overall because it ran 3 epochs instead of 5 and was not preempted.
 - **Verdict:** v8 Q6_K is the ship candidate. It beats the shipped v5 on test (89.2 vs 86.5) and fixes spelled-out numbers (80.1 at Q6_K, against v5's 13.4 even at full precision).
 
+### v9: the tokenizer fix
+- **Data and training:** identical to v8 (20,333 rows, full fine-tune, 3 epochs, best epoch 2, val loss 0.1123).
+- **What changed:** `hfeval.load_tokenizer` loads the Rust backend straight from `tokenizer.json`
+  instead of letting transformers 5 rebuild it. transformers 5.10.2's `Qwen2Tokenizer` ignores the
+  `[\p{L}\p{M}]+` letter-run rule in Qwen3.5's tokenizer.json and splits every Bengali word at its
+  combining marks (nukta, vowel signs): "এয়ারপোর্টের ... পাইলাম" is 36 tokens for transformers,
+  26 for the `tokenizers` library and 26 for llama.cpp. v3..v8 were all trained on the 36-token
+  version; the phone always saw the 26-token version. English and Banglish are unaffected
+  (identical ids), which is why the gap was Bangla-only.
+- **How it was found:** `ml/modal_app/gguf_diag.py` showed the gap is identical across every
+  server setting (slots, ubatch, flash attention, KV type, threads) and on llama.cpp master.
+  `gguf_diag_logits.py` then fed llama-server the exact HF token ids: next-token probabilities
+  match HF to three decimals at every position, so the forward pass was never the problem, while
+  `/apply-template` matched HF and `/tokenize` did not. `tok_check.py` pinned it on transformers.
+- **Result:** bf16 test 89.2, numbers 83.2 (within noise of v8's 89.6 / 84.9; v8 never paid for the
+  defect at bf16 because it was evaluated with the same tokenizer it trained on). GGUF: test Q6_K
+  89.2, Q5_K_M 89.4, Q4_K_M-imat 89.6; numbers Q6_K **83.8**, Q5_K_M 84.0, Q4_K_M-imat 84.0.
+  Bangla numbers: bf16 84.3, Q6_K 84.3, Q4_K_M-imat 86.5 (v8 Q6_K was 70.8). The phone path and
+  the HF path now agree, and Q4_K_M-imat (529 MB) is as good as Q6_K.
+- **Published:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v9` and `...-v9-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat).
+- **Lesson:** verify token ids end to end (training tokenizer vs `tokenizers` vs llama.cpp) before
+  trusting any GGUF number; `load_tokenizer` now asserts it on a Bangla probe at every run.
+
 ## Open problems
 
-1. **Label noise in `test`.** Category is two-thirds of every version's errors. 128 disagreement rows need judging against the guideline; the Codex judge stalled on quota.
-2. **GGUF Bangla gap.** 16 to 24 points lost on Bangla-script number messages in llama.cpp at every precision, BF16 included. Tokenization is identical, so the difference is in llama.cpp's Qwen3.5 forward pass. Worth a kiln issue with a minimal repro comparing per-layer outputs.
+1. **Label noise in `test`.** Category is two-thirds of every version's errors. Relabelling in progress: Sonnet 5.5 (`ml/results/relabel/sonnet.jsonl`, all 875 rows, agrees with the old gold on 81% of test) and Gemini 3.8 Flash (`gemini_shard*.jsonl`); `ml/data/relabel_merge.py` keeps rows where both agree. Labellers misread some Banglish number words ("share" = sare, "shaat" = sixty), so on the `numbers` split trust the template gold for amounts.
+2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
 3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
 4. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
