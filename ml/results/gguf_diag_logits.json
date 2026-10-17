@@ -1,0 +1,2578 @@
+[
+ {
+  "id": "txn_b22b97fb",
+  "language": "bangla",
+  "instruction": "এয়ারপোর্টের ট্রিপের ভাড়া নগদে সাড়ে আট হাজার পাইলাম, ফেরার পথে পাংচার সারাতে এক হাজার দিলাম।",
+  "n_prompt": 215,
+  "prompt_path": {
+   "template_matches_hf": true,
+   "tokens_match_hf": false,
+   "first_token_diff_at": 147,
+   "hf_tokens_around": [
+    "user",
+    "\n",
+    "এ",
+    "য",
+    "়",
+    "া",
+    "র",
+    "প",
+    "োর"
+   ],
+   "srv_tokens_around": [
+    "user",
+    "\n",
+    "এ",
+    "য়ার",
+    "প",
+    "োর্",
+    "ট",
+    "ের",
+    " ট"
+   ],
+   "n_hf": 215,
+   "n_srv": 200,
+   "chat_completion": "[{\"description\":\"এয়ারপোর্ট ট্রিপের ভাড়া\",\"amount\":8000.0,\"category\":\"transport\",\"type\":\"income\"},{\"description\":\"পাংচার সারা\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"}]",
+   "completion_from_hf_ids": "[{\"description\":\"এয়ারপোর্ট ট্রিপ ভাড়া\",\"amount\":8500.0,\"category\":\"transport\",\"type\":\"income\"},{\"description\":\"পাংচার থেকে আজকের ট্রিপের ভাড়া\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"}]"
+  },
+  "hf_completion": "[{\"description\":\"এয়ারপোর্ট ট্রিপের ভাড়া\",\"amount\":8500.0,\"category\":\"transport\",\"type\":\"income\"},{\"description\":\"পাংচার সারানো\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"}]",
+  "gold": [
+   {
+    "description": "এয়ারপোর্ট ট্রিপের ভাড়া",
+    "amount": 8500.0,
+    "category": "transport",
+    "type": "income"
+   },
+   {
+    "description": "পাংচার মেরামত",
+    "amount": 1000.0,
+    "category": "transport",
+    "type": "expense"
+   }
+  ],
+  "first_divergence": null,
+  "steps": [
+   {
+    "i": 0,
+    "tok": "[",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "[",
+    "diverge": false
+   },
+   {
+    "i": 1,
+    "tok": "{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "{\"",
+    "diverge": false
+   },
+   {
+    "i": 2,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 3,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 4,
+    "tok": "এ",
+    "hf_p": 0.9203,
+    "gguf_p": 0.9206,
+    "gguf_top": "এ",
+    "diverge": false
+   },
+   {
+    "i": 5,
+    "tok": "য",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "য",
+    "diverge": false
+   },
+   {
+    "i": 6,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 7,
+    "tok": "া",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 8,
+    "tok": "র",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "র",
+    "diverge": false
+   },
+   {
+    "i": 9,
+    "tok": "প",
+    "hf_p": 0.9997,
+    "gguf_p": 0.9998,
+    "gguf_top": "প",
+    "diverge": false
+   },
+   {
+    "i": 10,
+    "tok": "োর",
+    "hf_p": 0.9982,
+    "gguf_p": 0.9983,
+    "gguf_top": "োর",
+    "diverge": false
+   },
+   {
+    "i": 11,
+    "tok": "্ট",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "্ট",
+    "diverge": false
+   },
+   {
+    "i": 12,
+    "tok": " ট",
+    "hf_p": 0.9928,
+    "gguf_p": 0.9928,
+    "gguf_top": " ট",
+    "diverge": false
+   },
+   {
+    "i": 13,
+    "tok": "্র",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "্র",
+    "diverge": false
+   },
+   {
+    "i": 14,
+    "tok": "িপ",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "িপ",
+    "diverge": false
+   },
+   {
+    "i": 15,
+    "tok": "ের",
+    "hf_p": 0.6197,
+    "gguf_p": 0.6194,
+    "gguf_top": "ের",
+    "diverge": false
+   },
+   {
+    "i": 16,
+    "tok": " ভ",
+    "hf_p": 0.9956,
+    "gguf_p": 0.9956,
+    "gguf_top": " ভ",
+    "diverge": false
+   },
+   {
+    "i": 17,
+    "tok": "া",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 18,
+    "tok": "ড",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ড",
+    "diverge": false
+   },
+   {
+    "i": 19,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 20,
+    "tok": "া",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 21,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 22,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 23,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 24,
+    "tok": "8",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "8",
+    "diverge": false
+   },
+   {
+    "i": 25,
+    "tok": "5",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "5",
+    "diverge": false
+   },
+   {
+    "i": 26,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 27,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 28,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 29,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 30,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 31,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 32,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 33,
+    "tok": "transport",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "transport",
+    "diverge": false
+   },
+   {
+    "i": 34,
+    "tok": "\",\"",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 35,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 36,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 37,
+    "tok": "income",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "income",
+    "diverge": false
+   },
+   {
+    "i": 38,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 39,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 40,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 41,
+    "tok": "প",
+    "hf_p": 0.9972,
+    "gguf_p": 0.9972,
+    "gguf_top": "প",
+    "diverge": false
+   },
+   {
+    "i": 42,
+    "tok": "া",
+    "hf_p": 0.999,
+    "gguf_p": 0.999,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 43,
+    "tok": "ং",
+    "hf_p": 0.9901,
+    "gguf_p": 0.9905,
+    "gguf_top": "ং",
+    "diverge": false
+   },
+   {
+    "i": 44,
+    "tok": "চ",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "চ",
+    "diverge": false
+   },
+   {
+    "i": 45,
+    "tok": "ার",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "ার",
+    "diverge": false
+   },
+   {
+    "i": 46,
+    "tok": " স",
+    "hf_p": 0.6208,
+    "gguf_p": 0.6222,
+    "gguf_top": " স",
+    "diverge": false
+   },
+   {
+    "i": 47,
+    "tok": "ার",
+    "hf_p": 0.9982,
+    "gguf_p": 0.9982,
+    "gguf_top": "ার",
+    "diverge": false
+   },
+   {
+    "i": 48,
+    "tok": "ান",
+    "hf_p": 0.9994,
+    "gguf_p": 0.9994,
+    "gguf_top": "ান",
+    "diverge": false
+   },
+   {
+    "i": 49,
+    "tok": "ো",
+    "hf_p": 0.9992,
+    "gguf_p": 0.9992,
+    "gguf_top": "ো",
+    "diverge": false
+   },
+   {
+    "i": 50,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 51,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 52,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 53,
+    "tok": "1",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "1",
+    "diverge": false
+   },
+   {
+    "i": 54,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 55,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 56,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 57,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 58,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 59,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 60,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 61,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 62,
+    "tok": "transport",
+    "hf_p": 0.6868,
+    "gguf_p": 0.6865,
+    "gguf_top": "transport",
+    "diverge": false
+   },
+   {
+    "i": 63,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 64,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 65,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 66,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 67,
+    "tok": "\"}",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"}",
+    "diverge": false
+   },
+   {
+    "i": 68,
+    "tok": "]",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "]",
+    "diverge": false
+   }
+  ]
+ },
+ {
+  "id": "txn_3f8e23d3",
+  "language": "bangla",
+  "instruction": "তানিয়া আগের ধার থেকে আড়াই হাজার টাকা ফেরত দিল, একটু বাঁচলাম।",
+  "n_prompt": 194,
+  "prompt_path": {
+   "template_matches_hf": true,
+   "tokens_match_hf": false,
+   "first_token_diff_at": 148,
+   "hf_tokens_around": [
+    "\n",
+    "ত",
+    "ান",
+    "ি",
+    "য",
+    "়",
+    "া",
+    " আগ",
+    "ের"
+   ],
+   "srv_tokens_around": [
+    "\n",
+    "ত",
+    "ান",
+    "িয়া",
+    " আগ",
+    "ের",
+    " ধ",
+    "ার",
+    " থেকে"
+   ],
+   "n_hf": 194,
+   "n_srv": 183,
+   "chat_completion": "[{\"description\":\"তানিয়ার ধার ফেরত\",\"amount\":2500.0,\"category\":\"loan\",\"type\":\"income\"}]",
+   "completion_from_hf_ids": "[{\"description\":\"তানিয়ার ধার ফেরত\",\"amount\":2500.0,\"category\":\"loan\",\"type\":\"income\"}]"
+  },
+  "hf_completion": "[{\"description\":\"তানিয়ার ধার ফেরত\",\"amount\":2500.0,\"category\":\"loan\",\"type\":\"income\"}]",
+  "gold": [
+   {
+    "description": "তানিয়ার ধার ফেরত",
+    "amount": 2500.0,
+    "category": "loan",
+    "type": "income"
+   }
+  ],
+  "first_divergence": null,
+  "steps": [
+   {
+    "i": 0,
+    "tok": "[",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "[",
+    "diverge": false
+   },
+   {
+    "i": 1,
+    "tok": "{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "{\"",
+    "diverge": false
+   },
+   {
+    "i": 2,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 3,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 4,
+    "tok": "ত",
+    "hf_p": 0.9997,
+    "gguf_p": 0.9997,
+    "gguf_top": "ত",
+    "diverge": false
+   },
+   {
+    "i": 5,
+    "tok": "ান",
+    "hf_p": 0.9996,
+    "gguf_p": 0.9996,
+    "gguf_top": "ান",
+    "diverge": false
+   },
+   {
+    "i": 6,
+    "tok": "ি",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "ি",
+    "diverge": false
+   },
+   {
+    "i": 7,
+    "tok": "য",
+    "hf_p": 0.9997,
+    "gguf_p": 0.9997,
+    "gguf_top": "য",
+    "diverge": false
+   },
+   {
+    "i": 8,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 9,
+    "tok": "া",
+    "hf_p": 0.9971,
+    "gguf_p": 0.9971,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 10,
+    "tok": "র",
+    "hf_p": 0.9969,
+    "gguf_p": 0.997,
+    "gguf_top": "র",
+    "diverge": false
+   },
+   {
+    "i": 11,
+    "tok": " ধ",
+    "hf_p": 0.9996,
+    "gguf_p": 0.9996,
+    "gguf_top": " ধ",
+    "diverge": false
+   },
+   {
+    "i": 12,
+    "tok": "ার",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ার",
+    "diverge": false
+   },
+   {
+    "i": 13,
+    "tok": " ফ",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": " ফ",
+    "diverge": false
+   },
+   {
+    "i": 14,
+    "tok": "ের",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ের",
+    "diverge": false
+   },
+   {
+    "i": 15,
+    "tok": "ত",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ত",
+    "diverge": false
+   },
+   {
+    "i": 16,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 17,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 18,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 19,
+    "tok": "2",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "2",
+    "diverge": false
+   },
+   {
+    "i": 20,
+    "tok": "5",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "5",
+    "diverge": false
+   },
+   {
+    "i": 21,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 22,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 23,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 24,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 25,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 26,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 27,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 28,
+    "tok": "loan",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "loan",
+    "diverge": false
+   },
+   {
+    "i": 29,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 30,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 31,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 32,
+    "tok": "income",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "income",
+    "diverge": false
+   },
+   {
+    "i": 33,
+    "tok": "\"}",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"}",
+    "diverge": false
+   },
+   {
+    "i": 34,
+    "tok": "]",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "]",
+    "diverge": false
+   }
+  ]
+ },
+ {
+  "id": "txn_0f5aa7f2",
+  "language": "bangla",
+  "instruction": "দুপুরে বিরিয়ানি আনাইলাম সাতশো, সাথে বোরহানি বিশ আর পান নিলাম একশো দিয়ে",
+  "n_prompt": 203,
+  "prompt_path": {
+   "template_matches_hf": true,
+   "tokens_match_hf": false,
+   "first_token_diff_at": 148,
+   "hf_tokens_around": [
+    "\n",
+    "দ",
+    "ু",
+    "প",
+    "ুর",
+    "ে",
+    " ব",
+    "ির",
+    "ি"
+   ],
+   "srv_tokens_around": [
+    "\n",
+    "দ",
+    "ু",
+    "পুর",
+    "ে",
+    " বির",
+    "িয়",
+    "ান",
+    "ি"
+   ],
+   "n_hf": 203,
+   "n_srv": 188,
+   "chat_completion": "[{\"description\":\"দুপুরের নিজের বিরিয়ানি\",\"amount\":700.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"বোরহানি\",\"amount\":120.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"পান\",\"amount\":100.0,\"category\":\"food\",\"type\":\"expense\"}]",
+   "completion_from_hf_ids": "[{\"description\":\"বিরিয়ানি\",\"amount\":700.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"বোরহানি\",\"amount\":20.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"পান\",\"amount\":100.0,\"category\":\"food\",\"type\":\"expense\"}]"
+  },
+  "hf_completion": "[{\"description\":\"বিরিয়ানি\",\"amount\":700.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"বোরহানি\",\"amount\":20.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"পান\",\"amount\":100.0,\"category\":\"food\",\"type\":\"expense\"}]",
+  "gold": [
+   {
+    "description": "বিরিয়ানি",
+    "amount": 700.0,
+    "category": "food",
+    "type": "expense"
+   },
+   {
+    "description": "বোরহানি",
+    "amount": 20.0,
+    "category": "food",
+    "type": "expense"
+   },
+   {
+    "description": "পান",
+    "amount": 100.0,
+    "category": "food",
+    "type": "expense"
+   }
+  ],
+  "first_divergence": null,
+  "steps": [
+   {
+    "i": 0,
+    "tok": "[",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "[",
+    "diverge": false
+   },
+   {
+    "i": 1,
+    "tok": "{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "{\"",
+    "diverge": false
+   },
+   {
+    "i": 2,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 3,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 4,
+    "tok": "ব",
+    "hf_p": 0.5486,
+    "gguf_p": 0.548,
+    "gguf_top": "ব",
+    "diverge": false
+   },
+   {
+    "i": 5,
+    "tok": "ির",
+    "hf_p": 0.9953,
+    "gguf_p": 0.9954,
+    "gguf_top": "ির",
+    "diverge": false
+   },
+   {
+    "i": 6,
+    "tok": "ি",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9999,
+    "gguf_top": "ি",
+    "diverge": false
+   },
+   {
+    "i": 7,
+    "tok": "য",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "য",
+    "diverge": false
+   },
+   {
+    "i": 8,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 9,
+    "tok": "া",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 10,
+    "tok": "ন",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ন",
+    "diverge": false
+   },
+   {
+    "i": 11,
+    "tok": "ি",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ি",
+    "diverge": false
+   },
+   {
+    "i": 12,
+    "tok": "\",\"",
+    "hf_p": 0.9989,
+    "gguf_p": 0.9989,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 13,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 14,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 15,
+    "tok": "7",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "7",
+    "diverge": false
+   },
+   {
+    "i": 16,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 17,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 18,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 19,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 20,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 21,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 22,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 23,
+    "tok": "food",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "food",
+    "diverge": false
+   },
+   {
+    "i": 24,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 25,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 26,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 27,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 28,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 29,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 30,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 31,
+    "tok": "ব",
+    "hf_p": 0.9959,
+    "gguf_p": 0.9959,
+    "gguf_top": "ব",
+    "diverge": false
+   },
+   {
+    "i": 32,
+    "tok": "োর",
+    "hf_p": 0.9992,
+    "gguf_p": 0.9992,
+    "gguf_top": "োর",
+    "diverge": false
+   },
+   {
+    "i": 33,
+    "tok": "হ",
+    "hf_p": 0.9991,
+    "gguf_p": 0.9992,
+    "gguf_top": "হ",
+    "diverge": false
+   },
+   {
+    "i": 34,
+    "tok": "ান",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "ান",
+    "diverge": false
+   },
+   {
+    "i": 35,
+    "tok": "ি",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ি",
+    "diverge": false
+   },
+   {
+    "i": 36,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 37,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 38,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 39,
+    "tok": "2",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "2",
+    "diverge": false
+   },
+   {
+    "i": 40,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 41,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 42,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 43,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 44,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 45,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 46,
+    "tok": "food",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "food",
+    "diverge": false
+   },
+   {
+    "i": 47,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 48,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 49,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 50,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 51,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 52,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 53,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 54,
+    "tok": "প",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "প",
+    "diverge": false
+   },
+   {
+    "i": 55,
+    "tok": "ান",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ান",
+    "diverge": false
+   },
+   {
+    "i": 56,
+    "tok": "\",\"",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 57,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 58,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 59,
+    "tok": "1",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "1",
+    "diverge": false
+   },
+   {
+    "i": 60,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 61,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 62,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 63,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 64,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 65,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 66,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 67,
+    "tok": "food",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "food",
+    "diverge": false
+   },
+   {
+    "i": 68,
+    "tok": "\",\"",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 69,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 70,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 71,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 72,
+    "tok": "\"}",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"}",
+    "diverge": false
+   },
+   {
+    "i": 73,
+    "tok": "]",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "]",
+    "diverge": false
+   }
+  ]
+ },
+ {
+  "id": "txn_7251c7f1",
+  "language": "bangla",
+  "instruction": "আজ বেড়ানোর খরচ লিখি, বাসে এক হাজার, পার্কের টিকিটে এক হাজার, দুপুরের খাওয়ায় আটশো আর নৌকায় তিনশো দিলাম।",
+  "n_prompt": 226,
+  "prompt_path": {
+   "template_matches_hf": true,
+   "tokens_match_hf": false,
+   "first_token_diff_at": 148,
+   "hf_tokens_around": [
+    "\n",
+    "আ",
+    "জ",
+    " ব",
+    "ে",
+    "ড",
+    "়",
+    "া",
+    "ন"
+   ],
+   "srv_tokens_around": [
+    "\n",
+    "আ",
+    "জ",
+    " বে",
+    "ড়",
+    "ান",
+    "োর",
+    " খ",
+    "র"
+   ],
+   "n_hf": 226,
+   "n_srv": 211,
+   "chat_completion": "[{\"description\":\"বাস ভাড়া\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"},{\"description\":\"পার্কের টিকিট\",\"amount\":1000.0,\"category\":\"entertainment\",\"type\":\"expense\"},{\"description\":\"দুপুরের খাওয়া\",\"amount\":800.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"নৌকায় তিনশ0.0,\"category\":\"entertainment\",\"type\":\"expense\"}]",
+   "completion_from_hf_ids": "[{\"description\":\"বাস ভাড়া\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"},{\"description\":\"পার্কের টিকিট\",\"amount\":1000.0,\"category\":\"entertainment\",\"type\":\"expense\"},{\"description\":\"দুপুরের খা\",\"amount\":800.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"নৌকায় ত্রাণে যাওয়া\",\"amount\":300.0,\"category\":\"entertainment\",\"type\":\"expense"
+  },
+  "hf_completion": "[{\"description\":\"বাস ভাড়া\",\"amount\":1000.0,\"category\":\"transport\",\"type\":\"expense\"},{\"description\":\"পার্কের টিকিট\",\"amount\":1000.0,\"category\":\"entertainment\",\"type\":\"expense\"},{\"description\":\"দুপুরের খা\",\"amount\":800.0,\"category\":\"food\",\"type\":\"expense\"},{\"description\":\"নৌকা যাওয়া\",\"amount\":300.0,\"category\":\"entertainment\",\"type\":\"expense\"}]",
+  "gold": [
+   {
+    "description": "বাস ভাড়া",
+    "amount": 1000.0,
+    "category": "transport",
+    "type": "expense"
+   },
+   {
+    "description": "পার্কের টিকিট",
+    "amount": 1000.0,
+    "category": "entertainment",
+    "type": "expense"
+   },
+   {
+    "description": "দুপুরের খাবার",
+    "amount": 800.0,
+    "category": "food",
+    "type": "expense"
+   },
+   {
+    "description": "নৌকায় ঘোরা",
+    "amount": 300.0,
+    "category": "entertainment",
+    "type": "expense"
+   }
+  ],
+  "first_divergence": null,
+  "steps": [
+   {
+    "i": 0,
+    "tok": "[",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "[",
+    "diverge": false
+   },
+   {
+    "i": 1,
+    "tok": "{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "{\"",
+    "diverge": false
+   },
+   {
+    "i": 2,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 3,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 4,
+    "tok": "ব",
+    "hf_p": 0.9952,
+    "gguf_p": 0.9952,
+    "gguf_top": "ব",
+    "diverge": false
+   },
+   {
+    "i": 5,
+    "tok": "াস",
+    "hf_p": 0.9945,
+    "gguf_p": 0.9945,
+    "gguf_top": "াস",
+    "diverge": false
+   },
+   {
+    "i": 6,
+    "tok": " ভ",
+    "hf_p": 0.9961,
+    "gguf_p": 0.9961,
+    "gguf_top": " ভ",
+    "diverge": false
+   },
+   {
+    "i": 7,
+    "tok": "া",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 8,
+    "tok": "ড",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ড",
+    "diverge": false
+   },
+   {
+    "i": 9,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 10,
+    "tok": "া",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 11,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 12,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 13,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 14,
+    "tok": "1",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "1",
+    "diverge": false
+   },
+   {
+    "i": 15,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 16,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 17,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 18,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 19,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 20,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 21,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 22,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 23,
+    "tok": "transport",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "transport",
+    "diverge": false
+   },
+   {
+    "i": 24,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 25,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 26,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 27,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 28,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 29,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 30,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 31,
+    "tok": "প",
+    "hf_p": 0.9996,
+    "gguf_p": 0.9996,
+    "gguf_top": "প",
+    "diverge": false
+   },
+   {
+    "i": 32,
+    "tok": "ার",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ার",
+    "diverge": false
+   },
+   {
+    "i": 33,
+    "tok": "্ক",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "্ক",
+    "diverge": false
+   },
+   {
+    "i": 34,
+    "tok": "ের",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ের",
+    "diverge": false
+   },
+   {
+    "i": 35,
+    "tok": " ট",
+    "hf_p": 0.9996,
+    "gguf_p": 0.9996,
+    "gguf_top": " ট",
+    "diverge": false
+   },
+   {
+    "i": 36,
+    "tok": "িক",
+    "hf_p": 0.9997,
+    "gguf_p": 0.9998,
+    "gguf_top": "িক",
+    "diverge": false
+   },
+   {
+    "i": 37,
+    "tok": "ি",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ি",
+    "diverge": false
+   },
+   {
+    "i": 38,
+    "tok": "ট",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ট",
+    "diverge": false
+   },
+   {
+    "i": 39,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 40,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 41,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 42,
+    "tok": "1",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "1",
+    "diverge": false
+   },
+   {
+    "i": 43,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 44,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 45,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 46,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 47,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 48,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 49,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 50,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 51,
+    "tok": "ent",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ent",
+    "diverge": false
+   },
+   {
+    "i": 52,
+    "tok": "ertainment",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ertainment",
+    "diverge": false
+   },
+   {
+    "i": 53,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 54,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 55,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 56,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 57,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 58,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 59,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 60,
+    "tok": "দ",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": "দ",
+    "diverge": false
+   },
+   {
+    "i": 61,
+    "tok": "ু",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ু",
+    "diverge": false
+   },
+   {
+    "i": 62,
+    "tok": "প",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "প",
+    "diverge": false
+   },
+   {
+    "i": 63,
+    "tok": "ুর",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ুর",
+    "diverge": false
+   },
+   {
+    "i": 64,
+    "tok": "ের",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ের",
+    "diverge": false
+   },
+   {
+    "i": 65,
+    "tok": " খ",
+    "hf_p": 0.9998,
+    "gguf_p": 0.9998,
+    "gguf_top": " খ",
+    "diverge": false
+   },
+   {
+    "i": 66,
+    "tok": "া",
+    "hf_p": 0.9869,
+    "gguf_p": 0.9867,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 67,
+    "tok": "\",\"",
+    "hf_p": 0.984,
+    "gguf_p": 0.9837,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 68,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 69,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 70,
+    "tok": "8",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "8",
+    "diverge": false
+   },
+   {
+    "i": 71,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 72,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 73,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 74,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 75,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 76,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 77,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 78,
+    "tok": "food",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "food",
+    "diverge": false
+   },
+   {
+    "i": 79,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 80,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 81,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 82,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 83,
+    "tok": "\"},{\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"},{\"",
+    "diverge": false
+   },
+   {
+    "i": 84,
+    "tok": "description",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "description",
+    "diverge": false
+   },
+   {
+    "i": 85,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 86,
+    "tok": "ন",
+    "hf_p": 0.9938,
+    "gguf_p": 0.9939,
+    "gguf_top": "ন",
+    "diverge": false
+   },
+   {
+    "i": 87,
+    "tok": "ৌ",
+    "hf_p": 0.9999,
+    "gguf_p": 0.9999,
+    "gguf_top": "ৌ",
+    "diverge": false
+   },
+   {
+    "i": 88,
+    "tok": "ক",
+    "hf_p": 0.9974,
+    "gguf_p": 0.9974,
+    "gguf_top": "ক",
+    "diverge": false
+   },
+   {
+    "i": 89,
+    "tok": "া",
+    "hf_p": 0.999,
+    "gguf_p": 0.999,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 90,
+    "tok": " য",
+    "hf_p": 0.3515,
+    "gguf_p": 0.3509,
+    "gguf_top": " য",
+    "diverge": false
+   },
+   {
+    "i": 91,
+    "tok": "া",
+    "hf_p": 0.9985,
+    "gguf_p": 0.9985,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 92,
+    "tok": "ও",
+    "hf_p": 0.9928,
+    "gguf_p": 0.993,
+    "gguf_top": "ও",
+    "diverge": false
+   },
+   {
+    "i": 93,
+    "tok": "য",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "য",
+    "diverge": false
+   },
+   {
+    "i": 94,
+    "tok": "়",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "়",
+    "diverge": false
+   },
+   {
+    "i": 95,
+    "tok": "া",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "া",
+    "diverge": false
+   },
+   {
+    "i": 96,
+    "tok": "\",\"",
+    "hf_p": 0.9985,
+    "gguf_p": 0.9985,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 97,
+    "tok": "amount",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "amount",
+    "diverge": false
+   },
+   {
+    "i": 98,
+    "tok": "\":",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":",
+    "diverge": false
+   },
+   {
+    "i": 99,
+    "tok": "3",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "3",
+    "diverge": false
+   },
+   {
+    "i": 100,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 101,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 102,
+    "tok": ".",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ".",
+    "diverge": false
+   },
+   {
+    "i": 103,
+    "tok": "0",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "0",
+    "diverge": false
+   },
+   {
+    "i": 104,
+    "tok": ",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": ",\"",
+    "diverge": false
+   },
+   {
+    "i": 105,
+    "tok": "category",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "category",
+    "diverge": false
+   },
+   {
+    "i": 106,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 107,
+    "tok": "ent",
+    "hf_p": 0.9562,
+    "gguf_p": 0.9565,
+    "gguf_top": "ent",
+    "diverge": false
+   },
+   {
+    "i": 108,
+    "tok": "ertainment",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "ertainment",
+    "diverge": false
+   },
+   {
+    "i": 109,
+    "tok": "\",\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\",\"",
+    "diverge": false
+   },
+   {
+    "i": 110,
+    "tok": "type",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "type",
+    "diverge": false
+   },
+   {
+    "i": 111,
+    "tok": "\":\"",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\":\"",
+    "diverge": false
+   },
+   {
+    "i": 112,
+    "tok": "expense",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "expense",
+    "diverge": false
+   },
+   {
+    "i": 113,
+    "tok": "\"}",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "\"}",
+    "diverge": false
+   },
+   {
+    "i": 114,
+    "tok": "]",
+    "hf_p": 1.0,
+    "gguf_p": 1.0,
+    "gguf_top": "]",
+    "diverge": false
+   }
+  ]
+ }
+]
