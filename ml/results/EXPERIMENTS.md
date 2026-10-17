@@ -9,7 +9,7 @@ Last updated 2026-10-17 (night).
 ## Where things stand
 
 - **In the app today:** v5 Q6_K (630 MB). It reads spelled-out amounts wrong most of the time (numbers 13.4, probes 6/20).
-- **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less.
+- **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less, and 34 tok/s on the Pixel 8 against Q6_K's 27. Q4_0-imat is about 6% faster still but 1.3 points lower on numbers_clean. The 3-bit files are not faster (see "Speed on the Pixel 8").
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
 - **Next:** relabel the income and gift categories of the Codex-template training rows, which is what `numbers_clean` is waiting on.
 
@@ -144,6 +144,9 @@ on about 14% of rows.
 - **numbers_clean did not move (79.5 to 78.9).** Every one of its 52 overrules is a category on a Codex-template row, and the 8,775 template rows in train were not relabelled. On those 52 the model still follows the template convention (63.5%) over the labellers (11.5%). Typical cases: "tuition er betn pailam" (template `tuition`, guideline `salary`), "sold rice and recharge, got cash" (template grocery / mobile_recharge, guideline `salary`), a panjabi bought for Abbu (template `gift`, guideline `shopping`). So the template rows do not fully follow the guideline on income and gift categories, contrary to what RELABEL.md assumed.
 - **Phone format:** every quant from Q8_0 to IQ3_M-imat is within a point of bf16 on both clean sets. Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB. Q5_K_M on the old splits: test 81.3, numbers 86.0.
 - **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat (sha256 verified against the volume), with category and type right on all 20. "der lakh ... abbu theke" is `gift` again. The two misses are the same amount readings as before: "sare tin hajar" as 3000 and "bish hajar pachsho" as 25000.
+- **Probes on every quant (2026-10-17, Mac kiln-cli):** Q8_0, Q6_K, Q5_K_M, Q4_K_M-imat, IQ4_XS-imat and Q3_K_M-imat 18/20; Q4_0-imat 19/20 (only "bish hajar pachsho" as 25000); IQ3_M-imat 18/20 but with a different miss, "pach hajar 2 sho" as 4200, which every other quant gets right. Q5_K_M and IQ3_M read "bish hajar pachsho" as 22000 instead of 25000. Category and type are right on all 20 for every quant.
+- **Speed on the Pixel 8:** Q4_K_M-imat 34 tok/s, Q4_0-imat 36, Q6_K 27, Q8_0 24.5; the 3-bit files are no faster and IQ3_M-imat is the slowest of all (19 tok/s, 1.6 s to read the prompt). Full table under "Speed on the Pixel 8".
+- **Published in full (2026-10-17):** all 11 quants, F16 to IQ3_M-imat, are now in `...-v10-GGUF`, with eval JSONs for each.
 - **Published 2026-10-17:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v10` (bf16) and `...-v10-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat; Hub sha256 verified against the volume), trained on `ryuma007/hishab-synthetic-v5`, which holds the 20,057-row train split and all five eval splits.
 - **Next:** relabel the income and gift categories of the template rows (or regenerate them) the same way; that is what numbers_clean is waiting on.
 
@@ -357,6 +360,33 @@ v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows (v9: Q6_K 0, Q4_K_M-imat 1).
 description contains a number word and the output jumps straight into digits, skipping the
 `","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never does
 this. The app's lenient parser drops such entries, so the user would see a missing line.
+
+## Speed on the Pixel 8 (v10)
+
+kiln-bench on the Pixel 8 (Tensor G3), 2026-10-17, kiln main at 6b5d57b, android-arm64 CPU build.
+Each format ran 3 times in each of two passes, the second pass in reverse order, waiting for full
+CPU clocks and 20 s of rest before each format. The prompt is kiln-bench's ~65-token chat prompt;
+the model stops on its own, so answer length differs by format (26 to 81 tokens). Q4_0-imat and
+Q4_K_M-imat got 6 more runs each, alternating, because one Q4_0-imat run was disturbed (15.7 tok/s).
+
+| format | file | generation tok/s, median (range) | prompt read, median | peak RAM | runs |
+|---|---|---|---|---|---|
+| Q8_0 | 812 MB | 24.5 (21.9 to 25.7) | 389 ms | 1,775 MB | 6 |
+| Q6_K | 630 MB | 26.9 (23.5 to 30.4) | 542 ms | 1,411 MB | 6 |
+| Q5_K_M | 578 MB | 29.3 (26.5 to 33.1) | 552 ms | 1,307 MB | 6 |
+| **Q4_K_M-imat** | **529 MB** | **34.0** (30.7 to 36.7) | 460 ms | 1,210 MB | 12 |
+| Q4_0-imat | 502 MB | **35.9** (15.7 to 40.1) | 409 ms | 1,148 MB | 12 |
+| IQ4_XS-imat | 504 MB | 29.1 (27.6 to 32.7) | 789 ms | 957 MB | 6 |
+| Q3_K_M-imat | 466 MB | 30.4 (27.5 to 33.6) | 723 ms | 964 MB | 6 |
+| IQ3_M-imat | 454 MB | 19.4 (18.1 to 21.2) | 1,646 ms | 906 MB | 6 |
+
+In the 6 alternating runs, Q4_0-imat ran 35.2 to 40.1 tok/s and Q4_K_M-imat 33.4 to 36.6.
+
+What it says:
+- **Down to 4 bits, smaller is faster,** because generation is limited by reading the weights from memory.
+- **Below 4 bits it stops paying.** IQ4_XS and Q3_K_M are no faster than Q4_K_M and take 0.7 to 0.8 s to read the prompt instead of 0.46 s. IQ3_M is the slowest file of all: its codebook lookups cost more CPU than its 75 fewer MB save.
+- **Q4_0-imat is the fastest,** about 6% ahead of Q4_K_M-imat (9% in the alternating runs), as kiln's QUANT.md found for LFM2.5. For a typical 45-token Hishab answer that is about 0.1 s per message. It scores 93.7 on test_clean but 77.9 on numbers_clean against Q4_K_M-imat's 79.2, so Q4_K_M-imat stays the pick.
+- **RAM:** the K and I quants below 5 bits peak at about 0.9 to 1.2 GB; Q8_0 needs 1.8 GB.
 
 ## Phone probes, Q6_K through kiln-cli
 
