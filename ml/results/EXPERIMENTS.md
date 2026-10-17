@@ -35,7 +35,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v6 | 18,582 | 85.7 | 84.4 | **81.8** | 73.9 | 14/20 | number words learned |
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | **17/20** | epoch-4 weights after a preemption |
 | v8 | 20,333 | **89.6** | 89.2 | **84.9** | 80.1 | **18/20** | full fine-tune; trained with the mis-tokenizing transformers-5 tokenizer |
-| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | pending | **v8 recipe with the faithful tokenizer; GGUF now equals bf16; Q4_K_M-imat 89.6 / 84.0, ship candidate** |
+| v9 | 20,333 | 89.2 | **89.2** | 83.2 | **83.8** | 17/20 | **v8 recipe with the faithful tokenizer; GGUF now equals bf16; Q4_K_M-imat 89.6 / 84.0, ship candidate** |
 
 The probe scores are one rerun of all three files on 2026-10-17 with the same kiln-cli binary.
 Earlier runs recorded v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token
@@ -201,29 +201,31 @@ does this. The app's lenient parser drops such entries, so the user would see a 
 
 ## Phone probes, Q6_K through kiln-cli
 
-| probe | want | v5 | v6 | v7 | v8 |
-|---|---|---|---|---|---|
-| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ |
-| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ |
-| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ |
-| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ |
-| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ |
-| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ |
-| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ |
-| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ |
-| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ |
-| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 |
-| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ |
-| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ |
-| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ |
-| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ |
-| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ |
-| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ |
-| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ |
-| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 |
-| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ |
-| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ |
-| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** |
+| probe | want | v5 | v6 | v7 | v8 | v9 Q6_K / Q4_K_M-imat |
+|---|---|---|---|---|---|---|
+| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ | 3000 |
+| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ | ✓ |
+| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ | ✓ |
+| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ | 150000 salary |
+| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ | ✓ |
+| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ | ✓ |
+| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ | ✓ |
+| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 | 26000 / 20000 |
+| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ | ✓ |
+| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ | ✓ |
+| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ | ✓ |
+| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ | ✓ |
+| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ | ✓ |
+| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ | ✓ |
+| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 | ✓ |
+| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** | **17/20** (both) |
+
+v9 (both quants, on the published Hub files) misses the same three: "sare tin hajar" as 3000, "der lakh ... abbu theke" as salary instead of gift, and "bish hajar pachsho" (26000 at Q6_K, 20000 at Q4_K_M-imat); 17/20 against v8's 18/20 is one probe, inside the noise of a 20-item set, while the 357-row numbers split rose 80.1 to 83.8.
 
 v7's miss on "ekush hajar taka vara dilam" returns nothing at all. That is a new failure type,
 probably from the no-transaction rows added in v7, and it is worse for a user than a wrong
@@ -305,7 +307,7 @@ category because the entry silently disappears.
   token sequences are 30 to 40% shorter, so there is less low-precision drift per message. The
   old 4-bit penalty was partly the tokenizer defect compounding with quantization noise. Ship
   Q4_K_M-imat (529 MB) unless the phone probes say otherwise.
-- **Published:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v9` and `...-v9-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat).
+- **Published:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v9` and `...-v9-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat); sha256 of the Hub files verified against the volume. Probes on the Hub files: Q6_K 17/20, Q4_K_M-imat 17/20 (same three misses).
 - **Lesson:** verify token ids end to end (training tokenizer vs `tokenizers` vs llama.cpp) before
   trusting any GGUF number; `load_tokenizer` now asserts it on a Bangla probe at every run.
 
