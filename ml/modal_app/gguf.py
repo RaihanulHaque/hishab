@@ -340,6 +340,14 @@ so models trained on guideline-consistent data score lower on *test* by design.
 """
 
 
+TRIM_NOTE = ("\n**Trimmed vocabulary.** The 248k-token vocabulary of the base model is cut to {kept:,} tokens "
+             "(English, Bangla and Banglish, every single-character token so any text still encodes, and all special "
+             "tokens); the tied embedding / output table is sliced to match. No retraining: every Hishab test message "
+             "tokenizes exactly as before. 0.75B to 0.54B parameters, and about 45% faster generation on a Pixel 8. "
+             "Text in other scripts still works but splits into more, rarer pieces. See `vocab_trim` in the eval json "
+             "and `ml/hishab/vocab_trim.py` in the training repo.\n")
+
+
 def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> tuple[str, list[str]]:
     from hishab.prompts import system_prompt
 
@@ -385,7 +393,7 @@ def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> t
                     f"projections of `{meta['hf_id']}`, {meta['epochs']:g} epochs, merged after training")
     card = MODEL_CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, lr=meta["lr"],
                              train_rows=meta["train_rows"], repo_name=repo.split("/")[-1], example_output=example,
-                             format_note=note, rows="\n".join(rows), header=" | ".join(names[c] for c in cols),
+                             format_note=note + (TRIM_NOTE.format(kept=meta['vocab_trim']['kept']) if meta.get('vocab_trim') else ''), rows="\n".join(rows), header=" | ".join(names[c] for c in cols),
                              header_sep="---|" * len(cols), clean_note=CLEAN_NOTE if clean else "", first_file=files[0] if files else "<file>",
                              system_prompt=system_prompt(fmt).replace('"', "'"))
     return card, files

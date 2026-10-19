@@ -8,7 +8,7 @@ Last updated 2026-10-19.
 
 ## Where things stand
 
-- **In the app today:** v5 Q6_K (630 MB). It reads spelled-out amounts wrong most of the time (numbers 13.4, probes 6/20).
+- **In the app today:** v11-trim38k Q4_K_M-imat (343 MB).
 - **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less, and 34 tok/s on the Pixel 8 against Q6_K's 27. Q4_0-imat is about 6% faster still but 1.3 points lower on numbers_clean. The 3-bit files are not faster (see "Speed on the Pixel 8").
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
 - **Shorter output (v11):** the same model and data trained to write `description|-800|category` lines instead of JSON. It ties v10 (test_clean 92.4 bf16, 92.2 at Q4_K_M-imat) with 21 output tokens per message instead of 45, so about 0.6 s instead of 1.3 s on the Pixel 8. The app needs a pipe parser before it can use it.
@@ -189,7 +189,8 @@ v11 on `numbers_clean`: Q4_0-imat 77.3. Every v11 quant built (F16, Q6_K, Q5_K_M
   F16 is identical on both clean sets, as expected when every eval text keeps its tokens; the quant cells move by one or two messages because the quantization and imatrix were redone. Parseable output 100% everywhere.
 - **Speed on the Pixel 8 (2026-10-19, kiln-cli 0.5.0, CPU, Q4_K_M-imat, alternating, 15 s rest, 5 runs each):** generation **51.5 tok/s median (50.2 to 53.5)** trimmed against **35.4 (33.2 to 36.7)** untrimmed, about 45% faster. Prompt reading is faster too (about 120 vs 60 to 100 tok/s on an 11-token raw prompt). Resident memory 0.34 GB. The phone was charging, which slowed both equally since runs alternated.
 - **Risk:** words outside the 38k tokens split into smaller pieces the model rarely saw in that form. None of the eval sets hits this, and real users mostly type the same English, Bangla and Banglish words, but rare spellings and other scripts are where to look if the trimmed model ever misreads something the untrimmed one did not.
-- **Not done:** publishing, switching the app to it.
+- **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11-trim38k` (bf16) and `...-trim38k-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the benchmarked file). hishab_offline now downloads it (343 MB, about a minute on Wi-Fi).
+- **In the app on the Pixel 8:** the same 4 test messages as v11 give the same answers, read in 1.1 s / 0.7 s / 0.7 s against v11's 1.8 / 1.3 / 1.6 s; warm-up generation 47.7 tok/s against 32.3. Prompt reading with the cached system prompt also dropped (284 vs 467 ms).
 
 ## Open problems
 
