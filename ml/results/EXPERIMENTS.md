@@ -1,16 +1,17 @@
 # Hishab experiment log
 
-Every training version of the shipping model line: Qwen3.5-0.8B with `json` output. `RESULTS.md`
+Every training version of the shipping model line: Qwen3.5-0.8B with `json` output (v11: `pipe_signed`). `RESULTS.md`
 has the other base models (LFM2.5, Gemma) and the `two_phase` runs. `RELABEL.md` explains how the
 cleaned eval sets were made.
 
-Last updated 2026-10-17 (night).
+Last updated 2026-10-19.
 
 ## Where things stand
 
 - **In the app today:** v5 Q6_K (630 MB). It reads spelled-out amounts wrong most of the time (numbers 13.4, probes 6/20).
 - **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less, and 34 tok/s on the Pixel 8 against Q6_K's 27. Q4_0-imat is about 6% faster still but 1.3 points lower on numbers_clean. The 3-bit files are not faster (see "Speed on the Pixel 8").
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
+- **Shorter output (v11):** the same model and data trained to write `description|-800|category` lines instead of JSON. It ties v10 (test_clean 92.4 bf16, 92.2 at Q4_K_M-imat) with 21 output tokens per message instead of 45, so about 0.6 s instead of 1.3 s on the Pixel 8. The app needs a pipe parser before it can use it.
 - **Next:** relabel the income and gift categories of the Codex-template training rows, which is what `numbers_clean` is waiting on.
 
 ## Timeline
@@ -26,6 +27,7 @@ Last updated 2026-10-17 (night).
 | v8 | full fine-tune instead of LoRA | test 89.6, numbers 84.9; phone file lost Bangla numbers |
 | v9 | faithful tokenizer | phone file now equals full precision |
 | v10 | relabelled Gemini training rows | test_clean 92.2 bf16, 93.1 on the phone file |
+| v11 | `pipe_signed` output instead of JSON | test_clean 92.4 bf16, 92.2 on the phone file, 21 output tokens instead of 45 |
 
 ## How to read the numbers
 
@@ -55,7 +57,8 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 |---|---|---|---|---|---|---|
 | v8 | 84.5 | | | 77.9 | | |
 | v9 | 83.6 | | | **79.5** | | |
-| v10 | **92.2** | **93.1** | **93.1** | 78.9 | 79.2 | 79.2 |
+| v10 | 92.2 | **93.1** | **93.1** | 78.9 | 79.2 | **79.2** |
+| v11 (pipe) | **92.4** | 92.4 | 92.2 | **79.2** | 78.9 | 78.9 |
 
 ### On the original labels
 
@@ -73,6 +76,7 @@ on about 14% of rows.
 | v8 | 20,333 | **89.6** | **89.2** | 84.9 | 80.1 | **18/20** | mis-tokenized training |
 | v9 | 20,333 | 89.2 | **89.2** | 83.2 | 83.8 | 17/20 | Q4_K_M-imat 89.6 / 84.0 |
 | v10 | 20,057 | 80.3 | 81.1 | **85.2** | **85.2** | **18/20** | relabelled training |
+| v11 | 20,057 | 80.7 | | **85.4** | | | pipe output |
 
 ## Per version
 
@@ -149,6 +153,16 @@ on about 14% of rows.
 - **Published in full (2026-10-17):** all 11 quants, F16 to IQ3_M-imat, are now in `...-v10-GGUF`, with eval JSONs for each.
 - **Published 2026-10-17:** `ryuma007/hishab-qwen3.5-0.8b-json-full-v10` (bf16) and `...-v10-GGUF` (Q6_K, Q5_K_M, Q4_K_M-imat; Hub sha256 verified against the volume), trained on `ryuma007/hishab-synthetic-v5`, which holds the 20,057-row train split and all five eval splits.
 - **Next:** relabel the income and gift categories of the template rows (or regenerate them) the same way; that is what numbers_clean is waiting on.
+
+### v11: pipe output instead of JSON
+- **Why:** on the phone only generated tokens cost time (the system prompt is cached), and the JSON array spends more than half its tokens on keys, quotes and `.0`. Measured with the Qwen3.5 tokenizer on test_clean: JSON 45.3 tokens per message, YAML 45.9, TOML 58.1, array of arrays 26.9, pipe rows with a signed amount 20.7.
+- **Format (`pipe_signed`):** one `description|amount|category` line per transaction; the amount's sign is the type (`-` expense, `+` income); whole amounts have no `.0`, decimals keep up to 2 places; `NONE` when there is no transaction. Rendered from the same labels as JSON (`schema.render_target`), so there is no separate dataset. `parse_output` detects the format and splits each line on its last two `|`. Every row of every split round-trips exactly.
+- **Data and training:** identical to v10 (`train_v10.jsonl`, full fine-tune, lr 3e-5, 3 epochs, best epoch 2). Train time 97 min (v10: 68), so the shorter completions did not make training faster; the prompt dominates the sequence length. Validation loss (0.270) is per token and not comparable with JSON's.
+- **Result:** test_clean 92.4 bf16, numbers_clean 79.2, test 80.7, numbers 85.4, all within half a point of v10. Parseable output 100% on every split. Output length 21 tokens on test_clean (v10 45).
+- **Phone format (llama.cpp):** test_clean F16 92.4, Q6_K 92.4, Q5_K_M 92.4, Q4_K_M-imat 92.2, Q4_0-imat 92.6; numbers_clean F16 79.2, Q6_K 78.9, Q5_K_M 78.2, Q4_K_M-imat 78.9, Q4_0-imat 77.3.
+- **Against v10 at Q4_K_M-imat:** test_clean 92.2 vs 93.1 is 4 messages; 15 rows newly wrong and 11 newly right, the usual churn between two runs. Type errors are 4 in both, so the one-character sign did not make income/expense worse there. On numbers_clean type errors rose from 2 to 6 (category errors 61 to 60), worth watching. The new misses are mostly borderline categories (school trip as entertainment, lunch box as food) and messages with a planned spend recorded as an entry.
+- **Decimals:** the one decimal row in test_clean (`1250.50 tk`) comes out as `-1250.50`. Only 3 of the 20,057 training answers have a decimal (2,156 inputs contain `1.5k`-style shorthand, which becomes a whole number), so decimal amounts are not really tested yet.
+- **Not done:** Pixel speed measurement, kiln probes, app parser, publishing.
 
 ## Open problems
 

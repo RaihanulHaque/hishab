@@ -9,7 +9,7 @@ import torch
 
 from modal_app.common import DATA_DIR
 
-MAX_NEW_TOKENS = {"json": 192, "two_phase": 320}
+MAX_NEW_TOKENS = {"json": 192, "two_phase": 320, "pipe_signed": 128}
 
 # Probe used to verify the tokenizer honours tokenizer.json. transformers 5.x's Qwen2Tokenizer
 # rebuilds the pre-tokenizer with the old Qwen2 regex (\p{L}+), which splits Bengali words at

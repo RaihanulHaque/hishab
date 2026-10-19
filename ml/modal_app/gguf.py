@@ -28,7 +28,7 @@ from modal_app.common import DATA_DIR, RUNS_DIR, VOLUMES, app, gguf_image, hf_se
 LLAMA = Path("/opt/llama.cpp")
 BIN = LLAMA / "build" / "bin"
 DEFAULT_QUANTS = "F16,Q8_0,Q6_K,Q5_K_M,Q4_K_M,Q4_K_M-imat,Q4_0,Q4_0-imat,IQ4_XS-imat,Q3_K_M-imat,IQ3_M-imat"
-MAX_TOKENS = {"json": 192, "two_phase": 320}
+MAX_TOKENS = {"json": 192, "two_phase": 320, "pipe_signed": 128}
 N_PARALLEL = 8
 
 
@@ -365,6 +365,11 @@ def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> t
         example = "TRANSLATION: Today I paid 5000 taka tuition fee, rickshaw 80, tea 20.\nJSON:\n" + example
         note = ("\nThis variant answers in two phases: a `TRANSLATION:` line (English paraphrase, acts as a cheap "
                 "chain of thought) followed by `JSON:` and the array. Parse everything after `JSON:`.\n")
+    elif fmt == "pipe_signed":
+        example = "tuition fee|-5000|tuition\nrickshaw|-80|transport\ntea|-20|food"
+        note = ("\nThis variant answers with one `description|amount|category` line per transaction, about half "
+                "the tokens of JSON. The amount's sign is the type: `-` expense, `+` income. `NONE` means no "
+                "transaction. Split each line on the last two `|`.\n")
     else:
         note = "\nThis variant answers with the JSON array only.\n"
     if meta.get("tune") == "full":
