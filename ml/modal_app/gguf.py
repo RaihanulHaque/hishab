@@ -70,8 +70,14 @@ def make_ggufs(run: str, quants: list[str], force: bool = False) -> dict:
     gdir.mkdir(exist_ok=True)
     f16 = gdir / f"{run}-F16.gguf"
     if not f16.exists():
-        _restore_tokenizer_files(meta["hf_id"], run_dir / "merged")
-        cmd = [sys.executable, LLAMA / "convert_hf_to_gguf.py", run_dir / "merged", "--outtype", "f16", "--outfile", f16]
+        if meta.get("vocab_trim"):
+            # trim_vocab.py wrote a renumbered tokenizer: keep it, and pin the pre-tokenizer type
+            # (the converter's id-hash fingerprint changes with the ids, the regex does not)
+            cmd = [sys.executable, "/root/modal_app/convert_pinned.py", "qwen35"]
+        else:
+            _restore_tokenizer_files(meta["hf_id"], run_dir / "merged")
+            cmd = [sys.executable, LLAMA / "convert_hf_to_gguf.py"]
+        cmd += [run_dir / "merged", "--outtype", "f16", "--outfile", f16]
         try:
             _run(cmd)
         except subprocess.CalledProcessError:

@@ -12,6 +12,7 @@ Last updated 2026-10-19.
 - **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less, and 34 tok/s on the Pixel 8 against Q6_K's 27. Q4_0-imat is about 6% faster still but 1.3 points lower on numbers_clean. The 3-bit files are not faster (see "Speed on the Pixel 8").
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
 - **Shorter output (v11):** the same model and data trained to write `description|-800|category` lines instead of JSON. It ties v10 (test_clean 92.4 bf16, 92.2 at Q4_K_M-imat) with 21 output tokens per message instead of 45, so about 0.6 s instead of 1.3 s on the Pixel 8. The app needs a pipe parser before it can use it.
+- **Smaller and faster (v11-trim38k):** v11 with its 248k-token vocabulary cut to the 38k tokens English, Bangla and Banglish need. No retraining. Q4_K_M-imat drops from 529 MB to **343 MB** and generates **~45% faster** on the Pixel 8 (51.5 vs 35.4 tok/s), with the same accuracy (F16 identical on both clean sets).
 - **Next:** relabel the income and gift categories of the Codex-template training rows, which is what `numbers_clean` is waiting on.
 
 ## Timeline
@@ -28,6 +29,7 @@ Last updated 2026-10-19.
 | v9 | faithful tokenizer | phone file now equals full precision |
 | v10 | relabelled Gemini training rows | test_clean 92.2 bf16, 93.1 on the phone file |
 | v11 | `pipe_signed` output instead of JSON | test_clean 92.4 bf16, 92.2 on the phone file, 21 output tokens instead of 45 |
+| v11-trim38k | vocabulary cut from 248k to 38k tokens, no retraining | same accuracy, 343 MB instead of 529, ~45% faster generation |
 
 ## How to read the numbers
 
@@ -59,6 +61,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v9 | 83.6 | | | **79.5** | | |
 | v10 | 92.2 | **93.1** | **93.1** | 78.9 | 79.2 | **79.2** |
 | v11 (pipe) | **92.4** | 92.4 | 92.2 | **79.2** | 78.9 | 78.9 |
+| v11-trim38k | 92.4 (F16) | 92.4 | 92.0 | 79.2 (F16) | 78.9 | 78.9 |
 
 ### On the original labels
 
@@ -167,6 +170,26 @@ v11 on `numbers_clean`: Q4_0-imat 77.3. Every v11 quant built (F16, Q6_K, Q5_K_M
 - **On the Pixel 8 (2026-10-19, Q4_K_M-imat in the app with a pipe parser):** 4 of 4 messages right, including `+5000` income, a `1250.50` decimal, `NONE` for a message with no money in it, and "sare tin hajar" as 3500 (v10's probes read it as 3000). 7 to 33 output tokens per message; speed 18 to 32 tok/s while charging, so no clean speed comparison with v10 yet.
 - **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11` (bf16) and `...-v11-GGUF` (F16, Q6_K, Q5_K_M, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the file tested on the phone). The app (hishab_offline) now downloads v11.
 - **Not done:** kiln probe set, a cool-phone speed comparison against v10.
+
+### v11-trim38k: vocabulary trimming
+- **Why:** Qwen3.5-0.8B ties its embedding to the output layer: one 248,320 x 1,024 table, 209 MB of the 529 MB Q4_K_M-imat file (stored at Q6_K) and about a third of the parameters. The output layer scores every vocabulary entry for every generated token, so on the phone that table is read once per token. Hishab's whole dataset (every message, both target formats, the prompts) uses 5,875 of the 248k tokens.
+- **What was kept (`ml/hishab/vocab_trim.py`):** every token the data uses; all special tokens (including the 7 audio/vision markers declared only in `tokenizer_config.json`); every single-character token, so any text still encodes, byte by byte if need be; then the lowest-id (most frequent) tokens that are plain ASCII or Bangla script, until 38,000; plus the merge parents of every kept token. Merges whose parts or result were dropped are removed.
+- **How (`ml/modal_app/trim_vocab.py`):** renumber the kept tokens in their original order, slice the one embedding tensor (`model.language_model.embed_tokens.weight`, which the output layer and the MTP layer share), remap the special ids in config and generation_config, and write a new run `qwen3.5-0.8b__pipe_signed__full__v11__trim38k`. No training. llama.cpp's converter recognises the tokenizer by hashing the ids of a test string, which changes with renumbering, so `convert_pinned.py` pins the pre-tokenizer to `qwen35` (the regex is unchanged).
+- **Checks:** all 65,956 Hishab texts split into exactly the same pieces before and after. Other scripts still round-trip losslessly, just in more pieces (Cyrillic `Привет мир` 4 to 19 tokens, accented Latin `Héllo café — naïve résumé` 8 to 15); Bangla and Banglish probes keep their counts.
+- **Size:** 0.75B to 0.54B parameters. F16 1,517 to 1,076 MB, Q6_K 630 to 443, Q4_K_M-imat 529 to **343**, Q4_0-imat 502 to 316.
+- **Accuracy (llama.cpp), trimmed vs untrimmed v11:**
+
+| split | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat |
+|---|---|---|---|---|
+| test_clean | 92.4 / 92.4 | 92.4 / 92.4 | 92.0 / 92.2 | 92.9 / 92.6 |
+| numbers_clean | 79.2 / 79.2 | 78.9 / 78.9 | 78.9 / 78.9 | 77.3 / 77.3 |
+| test | 80.3 / | 80.5 / 80.7 | 80.3 / 80.5 | 80.1 / |
+| numbers | 85.4 / | 85.2 / 85.4 | 85.2 / 84.6 | 84.3 / |
+
+  F16 is identical on both clean sets, as expected when every eval text keeps its tokens; the quant cells move by one or two messages because the quantization and imatrix were redone. Parseable output 100% everywhere.
+- **Speed on the Pixel 8 (2026-10-19, kiln-cli 0.5.0, CPU, Q4_K_M-imat, alternating, 15 s rest, 5 runs each):** generation **51.5 tok/s median (50.2 to 53.5)** trimmed against **35.4 (33.2 to 36.7)** untrimmed, about 45% faster. Prompt reading is faster too (about 120 vs 60 to 100 tok/s on an 11-token raw prompt). Resident memory 0.34 GB. The phone was charging, which slowed both equally since runs alternated.
+- **Risk:** words outside the 38k tokens split into smaller pieces the model rarely saw in that form. None of the eval sets hits this, and real users mostly type the same English, Bangla and Banglish words, but rare spellings and other scripts are where to look if the trimmed model ever misreads something the untrimmed one did not.
+- **Not done:** publishing, switching the app to it.
 
 ## Open problems
 
