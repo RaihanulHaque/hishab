@@ -75,8 +75,8 @@ on about 14% of rows.
 | v7 | 20,333 | 86.7 | 86.1 | 77.6 | 73.9 | 17/20 | epoch-4 weights |
 | v8 | 20,333 | **89.6** | **89.2** | 84.9 | 80.1 | **18/20** | mis-tokenized training |
 | v9 | 20,333 | 89.2 | **89.2** | 83.2 | 83.8 | 17/20 | Q4_K_M-imat 89.6 / 84.0 |
-| v10 | 20,057 | 80.3 | 81.1 | **85.2** | **85.2** | **18/20** | relabelled training |
-| v11 | 20,057 | 80.7 | | **85.4** | | | pipe output |
+| v10 | 20,057 | 80.3 | 81.1 | 85.2 | 85.2 | **18/20** | relabelled training |
+| v11 | 20,057 | 80.7 | 80.7 | **85.4** | **85.4** | | pipe output; Q4_K_M-imat 80.5 / 84.6 |
 
 ## Per version
 
@@ -146,7 +146,9 @@ on about 14% of rows.
 - **Result on the clean gold:** test_clean **92.2** bf16, **93.1** at Q6_K and Q4_K_M-imat, up from v9's 83.6. Wrong messages on test_clean: 37 of 476. Bangla on test_clean 97.4, English 97.0. On the 72 test rows where both labellers overrule the old gold, v10 gives the guideline answer 73.6% of the time (v9: 19.4%) and the old gold 13.9% (v9: 62.5%).
 - **Result on the old gold:** test falls to 80.3, with count errors up from 7 to 36. That is the intended effect: those rows are where the old gold records plans, totals or merged items that the guideline does not. Numbers (old template gold) rises from 83.2 to **85.2**, the best of any version, and English numbers from 84.4 to 91.1.
 - **numbers_clean did not move (79.5 to 78.9).** Every one of its 52 overrules is a category on a Codex-template row, and the 8,775 template rows in train were not relabelled. On those 52 the model still follows the template convention (63.5%) over the labellers (11.5%). Typical cases: "tuition er betn pailam" (template `tuition`, guideline `salary`), "sold rice and recharge, got cash" (template grocery / mobile_recharge, guideline `salary`), a panjabi bought for Abbu (template `gift`, guideline `shopping`). So the template rows do not fully follow the guideline on income and gift categories, contrary to what RELABEL.md assumed.
-- **Phone format:** every quant from Q8_0 to IQ3_M-imat is within a point of bf16 on both clean sets. Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB. Q5_K_M on the old splits: test 81.3, numbers 86.0.
+- **Phone format:** every quant from Q8_0 to IQ3_M-imat is within a point of bf16 on both clean sets.
+
+v11 on `numbers_clean`: Q4_0-imat 77.3. Every v11 quant built (F16, Q6_K, Q5_K_M, Q4_K_M-imat, Q4_0-imat) parses 100% on both clean sets. Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB. Q5_K_M on the old splits: test 81.3, numbers 86.0.
 - **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat (sha256 verified against the volume), with category and type right on all 20. "der lakh ... abbu theke" is `gift` again. The two misses are the same amount readings as before: "sare tin hajar" as 3000 and "bish hajar pachsho" as 25000.
 - **Probes on every quant (2026-10-17, Mac kiln-cli):** Q8_0, Q6_K, Q5_K_M, Q4_K_M-imat, IQ4_XS-imat and Q3_K_M-imat 18/20; Q4_0-imat 19/20 (only "bish hajar pachsho" as 25000); IQ3_M-imat 18/20 but with a different miss, "pach hajar 2 sho" as 4200, which every other quant gets right. Q5_K_M and IQ3_M read "bish hajar pachsho" as 22000 instead of 25000. Category and type are right on all 20 for every quant.
 - **Speed on the Pixel 8:** Q4_K_M-imat 34 tok/s, Q4_0-imat 36, Q6_K 27, Q8_0 24.5; the 3-bit files are no faster and IQ3_M-imat is the slowest of all (19 tok/s, 1.6 s to read the prompt). Full table under "Speed on the Pixel 8".
@@ -184,7 +186,7 @@ loss on the completion only; Qwen3.5 thinking turned off; one A100-80GB on Modal
 by validation loss is kept.
 
 - **v3 to v7, LoRA:** r=16, alpha 32, dropout 0.05 on attention and MLP layers, learning rate 2e-4.
-- **v8 to v10, full fine-tune:** all weights, learning rate 3e-5.
+- **v8 to v11, full fine-tune:** all weights, learning rate 3e-5.
 
 | version | epochs run | best epoch | best val loss | val loss by epoch | final train loss | train time |
 |---|---|---|---|---|---|---|
@@ -196,9 +198,11 @@ by validation loss is kept.
 | v8 (full) | 3 | 2 | 0.1112 | .1254 / .1112 / .1213 | 0.007 | 104 min |
 | v9 (full, faithful tokenizer) | 3 | 2 | 0.1123 | .1223 / .1123 / .1235 | 0.007 | 85 min |
 | v10 (as v9, relabelled train) | 3 | 2 | 0.1228 | .1308 / .1228 / .1311 | | 68 min |
+| v11 (as v10, `pipe_signed` output) | 3 | 2 | 0.2697 | .2745 / .2697 / .2996 | 0.024 | 97 min |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
-falling. More than 3 epochs is overfitting on this data.
+falling. More than 3 epochs is overfitting on this data. v11's losses are per token of a much
+shorter target (no JSON keys or quotes, which are easy tokens), so they are not comparable with v3 to v10.
 
 ## Training data
 
@@ -212,7 +216,7 @@ Which dataset each model version was trained and evaluated on:
 | v5 | 9,564 | not saved | not published (v4 + 42 hand-written) | |
 | v6 | 18,582 | not saved | not published | |
 | v7, v8, v9 | 20,333 | `splits/train.jsonl` | `ryuma007/hishab-synthetic-v4` | validation, test, numbers |
-| v10 | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
+| v10, v11 | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
 
 "Not saved" sets were built by `ml/data/build_splits.py` from the `ml/datasets/synthetic_*.jsonl`
 sources as they stood then. Validation, test and numbers are the same rows in every dataset
@@ -221,7 +225,7 @@ version from v3 (numbers from v4 on). Dataset v5 adds the relabelled `test_clean
 
 Train rows by source:
 
-| source | v3 | v4 | v5 | v6 | v7 (= v8, v9) | v10 |
+| source | v3 | v4 | v5 | v6 | v7 (= v8, v9) | v10 (= v11) |
 |---|---|---|---|---|---|---|
 | Gemini base rows | 4,240 | 4,240 | 4,240 | 4,240 | 4,240 | 3,976 relabelled |
 | Gemini hard rows | 169 | 169 | 169 | 169 | 169 | 157 relabelled |
@@ -242,6 +246,7 @@ Train rows by language:
 | v6 | 9,204 | 4,271 | 3,346 | 1,761 |
 | v7 | 9,337 | 5,111 | 4,065 | 1,820 |
 | v10 | 9,161 | 5,063 | 4,031 | 1,802 |
+| v11 | same as v10 | | | |
 
 Transactions per message in train:
 
@@ -252,6 +257,7 @@ Transactions per message in train:
 | v6 | 47 | 7,692 | 8,279 | 1,927 | 637 |
 | v7 | 350 | 8,445 | 8,861 | 1,995 | 682 |
 | v10 | 458 | 8,373 | 8,618 | 1,932 | 676 |
+| v11 | same as v10 | | | | |
 
 ## Test set, bf16
 
@@ -266,6 +272,8 @@ Transactions per message in train:
 | v9 | 89.2 | 93.9 | **98.6** | 97.7 | **95.8** | 99.0 | **83.6** | 91.2 | **94.9** | 94.7 |
 | v10 | 80.3 | 89.3 | 93.1 | 93.1 | 92.0 | 99.2 | 73.1 | 87.2 | 79.8 | 90.7 |
 | v10 on `test_clean` (476) | 92.2 | 95.7 | 97.7 | 97.5 | 96.8 | 99.5 | 86.4 | 97.4 | 97.0 | 93.1 |
+| v11 | 80.7 | 89.8 | 94.2 | 94.0 | 92.6 | 99.1 | 73.1 | 88.0 | 81.8 | 89.3 |
+| v11 on `test_clean` (476) | 92.4 | 96.1 | 97.5 | 97.3 | 97.5 | 99.5 | 88.0 | 97.4 | 97.0 | 90.3 |
 
 Wrong messages by first failing field, out of 518:
 
@@ -280,6 +288,8 @@ Wrong messages by first failing field, out of 518:
 | v9 | 56 | 7 | 5 | 8 | 36 | tuition to other 5, salary to other 4, other to tuition 3 |
 | v10 | 102 | 36 | 0 | 5 | 61 | shopping to tuition 8, grocery to shopping 5, tuition to salary 5 |
 | v10 on `test_clean` (of 476) | 37 | 11 | 1 | 4 | 21 | other to food 2, shopping to gift 2, other to shopping 2 |
+| v11 | 100 | 30 | 1 | 8 | 61 | shopping to tuition 8, gift to shopping 6, other to salary 5 |
+| v11 on `test_clean` (of 476) | 36 | 12 | 1 | 4 | 19 | medical to shopping 2, other to shopping 2 |
 
 Category is two-thirds of the errors up to v9, and most of those swaps are cases where the Gemini
 gold disagrees with itself (ERROR_ANALYSIS.md). That is why test exact sat near 86 to 88
@@ -292,10 +302,12 @@ regardless of data, until v10 fixed the labels.
 | v5 | 13.4 | 24.2 | 85.2 | 19.9 | 80.3 | 89.9 | 10.7 | 9.0 | 17.8 | 21.6 |
 | v6 | 81.8 | 87.2 | **100.0** | **99.7** | 88.1 | 98.8 | 79.2 | 76.4 | 88.9 | 89.2 |
 | v7 | 77.6 | 84.1 | 99.4 | 99.2 | 86.8 | 96.5 | 75.8 | 74.2 | 82.2 | 82.4 |
-| v8 | 84.9 | 89.2 | 99.7 | 98.9 | **90.8** | 98.8 | **81.9** | **86.5** | 88.9 | 86.5 |
+| v8 | 84.9 | 89.2 | 99.7 | 98.9 | 90.8 | 98.8 | **81.9** | **86.5** | 88.9 | 86.5 |
 | v9 | 83.2 | 87.4 | **100.0** | **99.7** | 88.8 | 98.8 | 80.5 | 84.3 | 84.4 | 86.5 |
-| v10 | **85.2** | **89.3** | 99.7 | 99.2 | 90.6 | **99.3** | **81.9** | 83.1 | **91.1** | **90.5** |
+| v10 | 85.2 | 89.3 | 99.7 | 99.2 | 90.6 | **99.3** | **81.9** | 83.1 | **91.1** | 90.5 |
 | v10 on `numbers_clean` (317) | 78.9 | 84.5 | 99.7 | 99.1 | 85.2 | 99.6 | 74.4 | 82.5 | 85.7 | 78.8 |
+| v11 | **85.4** | 89.5 | **100.0** | **99.7** | **91.1** | 98.4 | 81.2 | 86.5 | 86.7 | **91.9** |
+| v11 on `numbers_clean` (317) | 79.2 | 85.0 | 100.0 | 99.7 | 85.5 | 99.0 | 73.6 | 85.0 | 83.3 | 80.3 |
 
 Wrong messages by first failing field, out of 357:
 
@@ -306,11 +318,14 @@ Wrong messages by first failing field, out of 357:
 | v7 | 80 | 2 | 1 | 20 | 57 | gift to shopping 8, other to shopping 6, other to tuition 6 |
 | v8 | 54 | 1 | 3 | 7 | 43 | gift to shopping 8, other to shopping 7 |
 | v9 | 60 | 0 | 1 | 5 | 54 | gift to shopping 9, other to transport 7, other to shopping 6 |
-| v10 | **53** | 1 | 2 | 4 | 46 | gift to shopping 6, other to transport 4, other to shopping 3 |
+| v10 | 53 | 1 | 2 | 4 | 46 | gift to shopping 6, other to transport 4, other to shopping 3 |
 | v10 on `numbers_clean` (of 317) | 67 | 1 | 2 | 2 | 62 | salary to other 8, tuition to other 5, salary to transport 4 |
+| v11 | **52** | 0 | 1 | 9 | 42 | gift to shopping 7, other to shopping 6, gift to other 5 |
+| v11 on `numbers_clean` (of 317) | 66 | 0 | 1 | 5 | 60 | salary to other 10, salary to tuition 5, salary to transport 5 |
 
 From v6 on, the model reads spelled-out amounts almost perfectly at full precision. What is left
-is category convention, plus v7's 20 income/expense flips.
+is category convention, plus v7's 20 income/expense flips. v11, where one `+` or `-` carries the
+type, flips 9 on numbers (v10: 4) but the same 4 on test_clean, so watch type on spelled-out amounts.
 
 ## Phone files (GGUF quantizations)
 
@@ -330,7 +345,9 @@ Test set, exact:
 | v8 | | | **89.2** | 88.2 | 88.6 | | | | | |
 | v9 | 89.0 | **89.6** | **89.2** | **89.4** | **89.6** | | | | | |
 | v10 | | | 81.1 | 81.3 | 81.1 | | | | | |
+| v11 | | | 80.7 | 81.1 | 80.5 | | | | | |
 | v10 on `test_clean` | 92.2 | 92.2 | 93.1 | 92.6 | 93.1 | 92.9 | 93.7 | 92.9 | 93.5 | 92.6 |
+| v11 on `test_clean` | 92.4 | | 92.4 | 92.4 | 92.2 | | 92.6 | | | |
 
 Numbers set, exact:
 
@@ -340,8 +357,10 @@ Numbers set, exact:
 | v7 | | | | 73.9 | 72.3 | 74.5 |
 | v8 | | | | 80.1 | 80.7 | 80.1 |
 | v9 | 83.2 (HF) | 83.2 | 82.9 | 83.8 | 84.0 | 84.0 |
-| v10 | 85.2 (HF) | | | **85.2** | **86.0** | **85.4** |
+| v10 | 85.2 (HF) | | | 85.2 | **86.0** | **85.4** |
+| v11 | 85.4 (HF) | | | **85.4** | 84.9 | 84.6 |
 | v10 on `numbers_clean` | 78.9 (HF) | 78.9 | 78.9 | 79.2 | 79.8 | 79.2 |
+| v11 on `numbers_clean` | 79.2 (HF) | 79.2 | | 78.9 | 78.2 | 78.9 |
 
 v10 on `numbers_clean`, the rest of the ladder: Q4_K_M 78.9, Q4_0 78.2, Q4_0-imat 77.9,
 IQ4_XS-imat 77.9, Q3_K_M-imat 77.3, IQ3_M-imat 79.5. Every quant down to IQ3_M stays within a
@@ -364,6 +383,9 @@ point of bf16 on both clean sets.
 | v10 | bf16 on HF | 81.9 | 83.1 | 91.1 | 90.5 |
 | v10 | Q6_K GGUF | 81.9 | 83.1 | 91.1 | 90.5 |
 | v10 | Q4_K_M-imat GGUF | 81.9 | 84.3 | 91.1 | 90.5 |
+| v11 | bf16 on HF | 81.2 | 86.5 | 86.7 | 91.9 |
+| v11 | Q6_K GGUF | 81.2 | 87.6 | 86.7 | 90.5 |
+| v11 | Q4_K_M-imat GGUF | 81.2 | 86.5 | 84.4 | 89.2 |
 
 Through v8, Banglish was the same on both paths while Bangla dropped about 17 points even in
 BF16 GGUF, which has the same weights as HF. The cause was the training tokenizer, not llama.cpp
@@ -397,6 +419,11 @@ Q4_K_M-imat got 6 more runs each, alternating, because one Q4_0-imat run was dis
 | IQ3_M-imat | 454 MB | 19.4 (18.1 to 21.2) | 1,646 ms | 906 MB | 6 |
 
 In the 6 alternating runs, Q4_0-imat ran 35.2 to 40.1 tok/s and Q4_K_M-imat 33.4 to 36.6.
+
+v11 has not been through kiln-bench yet. Its file is the same size and architecture as v10's, so tok/s
+should match; the saving is in tokens per answer: 21 against 45 on test_clean (20 against 44 over
+the training targets), so about 0.6 s instead of 1.3 s of generation per message at 34 tok/s. In the
+app on a charging Pixel 8 (2026-10-19) v11 answered in 7 to 33 tokens at 18 to 32 tok/s.
 
 What it says:
 - **Down to 4 bits, smaller is faster,** because generation is limited by reading the weights from memory.
