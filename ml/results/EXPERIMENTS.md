@@ -162,7 +162,9 @@ on about 14% of rows.
 - **Phone format (llama.cpp):** test_clean F16 92.4, Q6_K 92.4, Q5_K_M 92.4, Q4_K_M-imat 92.2, Q4_0-imat 92.6; numbers_clean F16 79.2, Q6_K 78.9, Q5_K_M 78.2, Q4_K_M-imat 78.9, Q4_0-imat 77.3.
 - **Against v10 at Q4_K_M-imat:** test_clean 92.2 vs 93.1 is 4 messages; 15 rows newly wrong and 11 newly right, the usual churn between two runs. Type errors are 4 in both, so the one-character sign did not make income/expense worse there. On numbers_clean type errors rose from 2 to 6 (category errors 61 to 60), worth watching. The new misses are mostly borderline categories (school trip as entertainment, lunch box as food) and messages with a planned spend recorded as an entry.
 - **Decimals:** the one decimal row in test_clean (`1250.50 tk`) comes out as `-1250.50`. Only 3 of the 20,057 training answers have a decimal (2,156 inputs contain `1.5k`-style shorthand, which becomes a whole number), so decimal amounts are not really tested yet.
-- **Not done:** Pixel speed measurement, kiln probes, app parser, publishing.
+- **On the Pixel 8 (2026-10-19, Q4_K_M-imat in the app with a pipe parser):** 4 of 4 messages right, including `+5000` income, a `1250.50` decimal, `NONE` for a message with no money in it, and "sare tin hajar" as 3500 (v10's probes read it as 3000). 7 to 33 output tokens per message; speed 18 to 32 tok/s while charging, so no clean speed comparison with v10 yet.
+- **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11` (bf16) and `...-v11-GGUF` (F16, Q6_K, Q5_K_M, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the file tested on the phone). The app (hishab_offline) now downloads v11.
+- **Not done:** kiln probe set, a cool-phone speed comparison against v10.
 
 ## Open problems
 

@@ -27,12 +27,12 @@ datasets: [{dataset}]
 # {repo_name}
 
 bf16 weights of `{hf_id}` fine-tuned ({training}) to turn a Banglish / Bangla /
-English message about money into a JSON array of transactions:
+English message about money into {output_desc}:
 
-```json
+```{example_lang}
 {example}
 ```
-
+{format_note}
 Categories: food, grocery, rent, utilities, mobile_recharge, transport, tuition, salary, gift,
 loan, shopping, medical, entertainment, other. Type is `expense` or `income`.
 
@@ -124,14 +124,22 @@ def push_model(run: str, repo_prefix: str = "ryuma007/hishab-", dataset: str = "
         rows.append(f"| {doc} | {a['n']} | {pct(a):.1f} | {100 * a['tx_f1']:.1f} | {pct(a, 'valid_json'):.1f} | {by_lang} |")
     splits_note = CLEAN_NOTE if "test_clean" in meta["splits"] else ""
     repo = f"{repo_prefix}{run.replace('__', '-').replace('_', '-')}"
-    example = json.dumps([{"description": "tuition fee", "amount": 5000.0, "category": "tuition", "type": "expense"},
-                          {"description": "rickshaw", "amount": 80.0, "category": "transport", "type": "expense"}],
-                         indent=1)
+    output_desc, example_lang, format_note = "a JSON array of transactions", "json", ""
+    if meta["fmt"] == "pipe_signed":
+        output_desc = "one `description|amount|category` line per transaction"
+        example_lang, example = "text", "tuition fee|-5000|tuition\nrickshaw|-80|transport\nsalary|+35000|salary"
+        format_note = ("\nThe amount's sign is the type: `-` expense, `+` income. `NONE` means no transaction. "
+                       "Split each line on its last two `|`. About half the output tokens of the JSON models.\n")
+    else:
+        example = json.dumps([{"description": "tuition fee", "amount": 5000.0, "category": "tuition", "type": "expense"},
+                              {"description": "rickshaw", "amount": 80.0, "category": "transport", "type": "expense"}],
+                             indent=1)
     training = ("full fine-tune, all weights" if meta.get("tune") == "full"
                 else f"LoRA r={meta.get('lora_r', 16)}, merged")
     training += f", {meta['epochs']:g} epochs, lr {meta['lr']:g}"
     card = CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, repo_name=repo.split("/")[-1],
-                       example=example, system_prompt=system_prompt(meta["fmt"]), rows="\n".join(rows),
+                       example=example, output_desc=output_desc, example_lang=example_lang,
+                       format_note=format_note, system_prompt=system_prompt(meta["fmt"]), rows="\n".join(rows),
                        splits_note=splits_note)
     api = HfApi()
     api.create_repo(repo, repo_type="model", exist_ok=True)
