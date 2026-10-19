@@ -2,7 +2,7 @@
 
 Every training version of the shipping model line: Qwen3.5-0.8B with `json` output (v11: `pipe_signed`). `RESULTS.md`
 has the other base models (LFM2.5, Gemma) and the `two_phase` runs. `RELABEL.md` explains how the
-cleaned eval sets were made.
+cleaned eval sets were made. `VOCAB_TRIM.md` explains the vocabulary trim and how to redo it.
 
 Last updated 2026-10-19.
 
@@ -173,6 +173,7 @@ v11 on `numbers_clean`: Q4_0-imat 77.3 (v11-trim38k: 77.3). Every v11 quant buil
 - **Not done:** kiln probe set, a cool-phone speed comparison against v10.
 
 ### v11-trim38k: vocabulary trimming
+Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Why:** Qwen3.5-0.8B ties its embedding to the output layer: one 248,320 x 1,024 table, 209 MB of the 529 MB Q4_K_M-imat file (stored at Q6_K) and about a third of the parameters. The output layer scores every vocabulary entry for every generated token, so on the phone that table is read once per token. Hishab's whole dataset (every message, both target formats, the prompts) uses 5,875 of the 248k tokens.
 - **What was kept (`ml/hishab/vocab_trim.py`):** every token the data uses; all special tokens (including the 7 audio/vision markers declared only in `tokenizer_config.json`); every single-character token, so any text still encodes, byte by byte if need be; then the lowest-id (most frequent) tokens that are plain ASCII or Bangla script, until 38,000; plus the merge parents of every kept token. Merges whose parts or result were dropped are removed.
 - **How (`ml/modal_app/trim_vocab.py`):** renumber the kept tokens in their original order, slice the one embedding tensor (`model.language_model.embed_tokens.weight`, which the output layer and the MTP layer share), remap the special ids in config and generation_config, and write a new run `qwen3.5-0.8b__pipe_signed__full__v11__trim38k`. No training. llama.cpp's converter recognises the tokenizer by hashing the ids of a test string, which changes with renumbering, so `convert_pinned.py` pins the pre-tokenizer to `qwen35` (the regex is unchanged).

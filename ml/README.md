@@ -10,10 +10,11 @@ Use the `ML` conda env for every command.
 ```
 ml/
 ├── hishab/            pure-python package shared by laptop and Modal containers
-│   ├── schema.py      categories, target rendering (json | two_phase), lenient output parser
+│   ├── schema.py      categories, target rendering (json | two_phase | pipe_signed), lenient output parser
 │   ├── prompts.py     short system prompts per output format
 │   ├── metrics.py     scoring: valid JSON, exact match, tuple F1, per-field acc, per language
-│   └── registry.py    candidate base models + LoRA targets
+│   ├── registry.py    candidate base models + LoRA targets
+│   └── vocab_trim.py  pick the tokens to keep, rebuild tokenizer.json (see results/VOCAB_TRIM.md)
 ├── data/build_splits.py   dedupe + stratified train/validation/test  ->  ml/datasets/splits/
 ├── modal_app/
 │   ├── common.py      Modal app, volumes (hishab-data, hishab-runs, hishab-hf-cache), images
@@ -21,6 +22,8 @@ ml/
 │   ├── gguf.py        HF -> F16 GGUF -> imatrix -> many quants -> llama-server eval of each
 │   ├── push_dataset.py  publish splits to HF (v5: --train-split train_v10)
 │   ├── push_model.py    publish a run's merged bf16 weights + card as ryuma007/hishab-<run>
+│   ├── trim_vocab.py    cut a run's vocabulary to English / Bangla / Banglish  ->  /runs/<run>__trim38k
+│   ├── convert_pinned.py  llama.cpp converter with the tokenizer type pinned (needed after a trim)
 │   └── report.py      aggregate every eval json into ml/results/RESULTS.md
 ├── datasets/          raw synthetic data, splits, pretraining corpus
 ├── scripts/           dataset generation utilities (Gemini)
@@ -33,8 +36,11 @@ ml/
   the phone.
 * `two_phase` – `TRANSLATION: <english>` line then `JSON:` and the array (what the v2 models
   were trained on). The translation is a cheap chain of thought; it costs ~2x output tokens.
+* `pipe_signed` (v11 on, what the app uses) – one `description|-800|category` line per
+  transaction, `+` for income, `NONE` when there is none. Rendered from the same labels at train
+  time; about half the output tokens of `json` at the same accuracy.
 
-Both are trained and compared. Loss is on the completion only (TRL prompt-completion format).
+All are trained and compared with `--fmts`. Loss is on the completion only (TRL prompt-completion format).
 
 ## Commands
 
@@ -52,6 +58,10 @@ conda run -n ML modal run ml/modal_app/train.py --models qwen3.5-0.8b,lfm2.5-350
 
 # 3. GGUF sweep for the winners (CPU containers, llama.cpp at kiln's commit)
 conda run -n ML modal run ml/modal_app/gguf.py --runs qwen3.5-0.8b__json__lora,lfm2.5-350m__json__lora --push
+
+# 3b. optional: trim the vocabulary of the winner (35% smaller, ~45% faster on the phone, same
+#     accuracy; ml/results/VOCAB_TRIM.md), then run step 3 on the new <run>__trim38k
+conda run -n ML modal run ml/modal_app/trim_vocab.py --run qwen3.5-0.8b__pipe_signed__full__v11 --target 38000
 
 # 4. report
 conda run -n ML modal run ml/modal_app/report.py
