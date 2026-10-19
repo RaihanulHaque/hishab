@@ -80,6 +80,7 @@ on about 14% of rows.
 | v9 | 20,333 | 89.2 | **89.2** | 83.2 | 83.8 | 17/20 | Q4_K_M-imat 89.6 / 84.0 |
 | v10 | 20,057 | 80.3 | 81.1 | 85.2 | 85.2 | **18/20** | relabelled training |
 | v11 | 20,057 | 80.7 | 80.7 | **85.4** | **85.4** | | pipe output; Q4_K_M-imat 80.5 / 84.6 |
+| v11-trim38k | 20,057 | | 80.5 | | 85.2 | | v11, vocabulary 38k; Q4_K_M-imat 80.3 / 85.2 |
 
 ## Per version
 
@@ -151,7 +152,7 @@ on about 14% of rows.
 - **numbers_clean did not move (79.5 to 78.9).** Every one of its 52 overrules is a category on a Codex-template row, and the 8,775 template rows in train were not relabelled. On those 52 the model still follows the template convention (63.5%) over the labellers (11.5%). Typical cases: "tuition er betn pailam" (template `tuition`, guideline `salary`), "sold rice and recharge, got cash" (template grocery / mobile_recharge, guideline `salary`), a panjabi bought for Abbu (template `gift`, guideline `shopping`). So the template rows do not fully follow the guideline on income and gift categories, contrary to what RELABEL.md assumed.
 - **Phone format:** every quant from Q8_0 to IQ3_M-imat is within a point of bf16 on both clean sets.
 
-v11 on `numbers_clean`: Q4_0-imat 77.3. Every v11 quant built (F16, Q6_K, Q5_K_M, Q4_K_M-imat, Q4_0-imat) parses 100% on both clean sets. Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB. Q5_K_M on the old splits: test 81.3, numbers 86.0.
+v11 on `numbers_clean`: Q4_0-imat 77.3 (v11-trim38k: 77.3). Every v11 quant built (F16, Q6_K, Q5_K_M, Q4_K_M-imat, Q4_0-imat) parses 100% on both clean sets. Q4_K_M-imat ties Q6_K (93.1 / 79.2) at 529 MB. Q5_K_M on the old splits: test 81.3, numbers 86.0.
 - **Phone probes:** 18/20 on both Q6_K and Q4_K_M-imat (sha256 verified against the volume), with category and type right on all 20. "der lakh ... abbu theke" is `gift` again. The two misses are the same amount readings as before: "sare tin hajar" as 3000 and "bish hajar pachsho" as 25000.
 - **Probes on every quant (2026-10-17, Mac kiln-cli):** Q8_0, Q6_K, Q5_K_M, Q4_K_M-imat, IQ4_XS-imat and Q3_K_M-imat 18/20; Q4_0-imat 19/20 (only "bish hajar pachsho" as 25000); IQ3_M-imat 18/20 but with a different miss, "pach hajar 2 sho" as 4200, which every other quant gets right. Q5_K_M and IQ3_M read "bish hajar pachsho" as 22000 instead of 25000. Category and type are right on all 20 for every quant.
 - **Speed on the Pixel 8:** Q4_K_M-imat 34 tok/s, Q4_0-imat 36, Q6_K 27, Q8_0 24.5; the 3-bit files are no faster and IQ3_M-imat is the slowest of all (19 tok/s, 1.6 s to read the prompt). Full table under "Speed on the Pixel 8".
@@ -223,6 +224,7 @@ by validation loss is kept.
 | v9 (full, faithful tokenizer) | 3 | 2 | 0.1123 | .1223 / .1123 / .1235 | 0.007 | 85 min |
 | v10 (as v9, relabelled train) | 3 | 2 | 0.1228 | .1308 / .1228 / .1311 | | 68 min |
 | v11 (as v10, `pipe_signed` output) | 3 | 2 | 0.2697 | .2745 / .2697 / .2996 | 0.024 | 97 min |
+| v11-trim38k (v11 weights, vocabulary sliced) | no training | | | | | |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
 falling. More than 3 epochs is overfitting on this data. v11's losses are per token of a much
@@ -240,7 +242,7 @@ Which dataset each model version was trained and evaluated on:
 | v5 | 9,564 | not saved | not published (v4 + 42 hand-written) | |
 | v6 | 18,582 | not saved | not published | |
 | v7, v8, v9 | 20,333 | `splits/train.jsonl` | `ryuma007/hishab-synthetic-v4` | validation, test, numbers |
-| v10, v11 | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
+| v10, v11, v11-trim38k | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
 
 "Not saved" sets were built by `ml/data/build_splits.py` from the `ml/datasets/synthetic_*.jsonl`
 sources as they stood then. Validation, test and numbers are the same rows in every dataset
@@ -353,7 +355,7 @@ type, flips 9 on numbers (v10: 4) but the same 4 on test_clean, so watch type on
 
 ## Phone files (GGUF quantizations)
 
-File sizes: F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
+File sizes (v11-trim38k: F16 1,076, Q6_K 443, Q4_K_M-imat 343, Q4_0-imat 316): F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
 Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and output at Q8_0, add
 40 to 60 MB and score within a point of the plain quants.
 
@@ -370,8 +372,10 @@ Test set, exact:
 | v9 | 89.0 | **89.6** | **89.2** | **89.4** | **89.6** | | | | | |
 | v10 | | | 81.1 | 81.3 | 81.1 | | | | | |
 | v11 | | | 80.7 | 81.1 | 80.5 | | | | | |
+| v11-trim38k | 80.3 | | 80.5 | | 80.3 | | 80.1 | | | |
 | v10 on `test_clean` | 92.2 | 92.2 | 93.1 | 92.6 | 93.1 | 92.9 | 93.7 | 92.9 | 93.5 | 92.6 |
 | v11 on `test_clean` | 92.4 | | 92.4 | 92.4 | 92.2 | | 92.6 | | | |
+| v11-trim38k on `test_clean` | 92.4 | | 92.4 | | 92.0 | | 92.9 | | | |
 
 Numbers set, exact:
 
@@ -383,8 +387,10 @@ Numbers set, exact:
 | v9 | 83.2 (HF) | 83.2 | 82.9 | 83.8 | 84.0 | 84.0 |
 | v10 | 85.2 (HF) | | | 85.2 | **86.0** | **85.4** |
 | v11 | 85.4 (HF) | | | **85.4** | 84.9 | 84.6 |
+| v11-trim38k | | 85.4 | | 85.2 | | 85.2 |
 | v10 on `numbers_clean` | 78.9 (HF) | 78.9 | 78.9 | 79.2 | 79.8 | 79.2 |
 | v11 on `numbers_clean` | 79.2 (HF) | 79.2 | | 78.9 | 78.2 | 78.9 |
+| v11-trim38k on `numbers_clean` | | 79.2 | | 78.9 | | 78.9 |
 
 v10 on `numbers_clean`, the rest of the ladder: Q4_K_M 78.9, Q4_0 78.2, Q4_0-imat 77.9,
 IQ4_XS-imat 77.9, Q3_K_M-imat 77.3, IQ3_M-imat 79.5. Every quant down to IQ3_M stays within a
@@ -410,6 +416,8 @@ point of bf16 on both clean sets.
 | v11 | bf16 on HF | 81.2 | 86.5 | 86.7 | 91.9 |
 | v11 | Q6_K GGUF | 81.2 | 87.6 | 86.7 | 90.5 |
 | v11 | Q4_K_M-imat GGUF | 81.2 | 86.5 | 84.4 | 89.2 |
+| v11-trim38k | Q6_K GGUF | 81.2 | 87.6 | 86.7 | 89.2 |
+| v11-trim38k | Q4_K_M-imat GGUF | 81.2 | 87.6 | 84.4 | 90.5 |
 
 Through v8, Banglish was the same on both paths while Bangla dropped about 17 points even in
 BF16 GGUF, which has the same weights as HF. The cause was the training tokenizer, not llama.cpp
@@ -423,7 +431,9 @@ description contains a number word and the output jumps straight into digits, sk
 `","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never does
 this. The app's lenient parser drops such entries, so the user would see a missing line.
 
-## Speed on the Pixel 8 (v10)
+## Speed on the Pixel 8
+
+### v10 quants (2026-10-17)
 
 kiln-bench on the Pixel 8 (Tensor G3), 2026-10-17, kiln main at 6b5d57b, android-arm64 CPU build.
 Each format ran 3 times in each of two passes, the second pass in reverse order, waiting for full
@@ -444,10 +454,33 @@ Q4_K_M-imat got 6 more runs each, alternating, because one Q4_0-imat run was dis
 
 In the 6 alternating runs, Q4_0-imat ran 35.2 to 40.1 tok/s and Q4_K_M-imat 33.4 to 36.6.
 
-v11 has not been through kiln-bench yet. Its file is the same size and architecture as v10's, so tok/s
-should match; the saving is in tokens per answer: 21 against 45 on test_clean (20 against 44 over
-the training targets), so about 0.6 s instead of 1.3 s of generation per message at 34 tok/s. In the
-app on a charging Pixel 8 (2026-10-19) v11 answered in 7 to 33 tokens at 18 to 32 tok/s.
+### v11 and v11-trim38k (2026-10-19)
+
+v11's file is the same size and architecture as v10's, so its tok/s matches; its saving is in tokens
+per answer: 21 against 45 on test_clean (20 against 44 over the training targets). v11-trim38k then
+makes every token cheaper, because the output layer scores 38k instead of 248k entries.
+
+kiln-cli 0.5.0 on the Pixel 8 (CPU, charging), Q4_K_M-imat, raw 11-token prompt, the two files
+alternating with 15 s rest, 5 runs each:
+
+| file | size | generation tok/s, median (range) |
+|---|---|---|
+| v11 | 529 MB | 35.4 (33.2 to 36.7) |
+| **v11-trim38k** | **343 MB** | **51.5** (50.2 to 53.5) |
+
+kiln reports the trimmed model at 0.54B parameters and 0.34 GB resident.
+
+In the app (system prompt cached, greedy), the same messages:
+
+| message | v11 | v11-trim38k |
+|---|---|---|
+| salary 45k pelam, rickshaw 60, electricity bill 1250.50 (32 tokens out) | 1.8 s | 1.1 s |
+| lunch -800, abbu dilo +5000 (21 tokens) | 1.3 s | 0.7 s |
+| sare tin hajar tk bazar, cha 20 (17 tokens) | 1.6 s | 0.7 s |
+| warm-up "chaa 10" (7 tokens) | 32.3 tok/s | 47.7 tok/s |
+
+Against v10 (JSON, untrimmed, ~45 tokens at ~34 tok/s, about 1.3 s of generation per message), a
+typical v11-trim38k answer of ~21 tokens at ~50 tok/s is about 0.4 s: roughly three times faster.
 
 What it says:
 - **Down to 4 bits, smaller is faster,** because generation is limited by reading the weights from memory.
