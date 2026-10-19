@@ -30,6 +30,7 @@ Last updated 2026-10-19.
 | v10 | relabelled Gemini training rows | test_clean 92.2 bf16, 93.1 on the phone file |
 | v11 | `pipe_signed` output instead of JSON | test_clean 92.4 bf16, 92.2 on the phone file, 21 output tokens instead of 45 |
 | v11-trim38k | vocabulary cut from 248k to 38k tokens, no retraining | same accuracy, 343 MB instead of 529, ~45% faster generation |
+| (MTP) | trained the MTP layer for speculative decoding | 98% acceptance, +87% on desktop, no gain on the Pixel 8; parked |
 
 ## How to read the numbers
 
@@ -193,6 +194,14 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Risk:** words outside the 38k tokens split into smaller pieces the model rarely saw in that form. None of the eval sets hits this, and real users mostly type the same English, Bangla and Banglish words, but rare spellings and other scripts are where to look if the trimmed model ever misreads something the untrimmed one did not.
 - **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11-trim38k` (bf16) and `...-trim38k-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the benchmarked file). hishab_offline now downloads it (343 MB, about a minute on Wi-Fi).
 - **In the app on the Pixel 8:** the same 4 test messages as v11 give the same answers, read in 1.1 s / 0.7 s / 0.7 s against v11's 1.8 / 1.3 / 1.6 s; warm-up generation 47.7 tok/s against 32.3. Prompt reading with the cached system prompt also dropped (284 vs 467 ms).
+
+### MTP (multi-token prediction): tried, parked (2026-10-20)
+- **Idea:** Qwen3.5-0.8B has one MTP layer (~25M parameters) that guesses the token after next from the main model's last hidden state. llama.cpp (`--spec-type draft-mtp`) lets the main model check the guesses in one pass, so greedy answers stay the same and only speed can change.
+- **Found:** our fine-tuned runs had lost the layer (transformers' `Qwen3_5ForCausalLM` has no MTP module, so the merged models never saved `mtp.*`; the GGUFs say `nextn_predict_layers=1` but have no block 24). `ml/modal_app/mtp.py` grafts the base model's layer back and benchmarks; `ml/modal_app/train_mtp.py` trains only the MTP layer (main model frozen) to match v11's own next-token distribution (KL), 2 epochs on train_v10, 7.5 min on one A100.
+- **Training worked:** top-1 agreement with the main model 68% to **97.3%** on test_clean (96.4% validation). The layer adds 13 MB (356 MB Q4_K_M-imat).
+- **Modal (llama-server, CPU, all 476 test_clean, Q4_K_M-imat):** exact 92.0 in every setting. Trained MTP, 1 draft token: 98% accepted, +59% generation speed, 476/476 answers identical; 2 drafts: 86% accepted, **+87%**, 476/476 identical; 3 drafts: +113% but 469/476 identical (batched verification rounds differently; score unchanged). Untrained base layer: 68% accepted, +50% at 1 draft.
+- **Pixel 8 (llama-server built from kiln's llama.cpp commit, pinned to the 5 big cores): no gain.** Plain 46.9 tok/s; trained MTP 45.1 (1 draft, 99% accepted) and 41.9 (2 drafts, 85%), answers identical. llama-bench shows verifying 2 tokens costs 1.3x one token and 3 tokens 1.9x, so ~1.4x was possible in theory; the per-step overhead (a second graph, recurrent-state snapshots for rollback, extra sampling) eats it on the phone. A first Android build without OpenMP ran MTP at 1 to 2 tok/s: ggml then starts threads for every graph, and MTP runs many tiny graphs (kiln builds with OpenMP for this reason).
+- **Verdict:** parked. Accuracy is unaffected and acceptance is excellent, but it only pays where verification is cheap relative to step overhead (desktop). kiln has no speculative decoding; a lean implementation might recover part of the ~1.4x, unmeasured. Runs on the `hishab-runs` volume: `..._v11__trim38k__mtpbase` (grafted) and `..._v11__trim38k__mtp` (trained); not published.
 
 ## Open problems
 
