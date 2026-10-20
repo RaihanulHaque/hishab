@@ -30,6 +30,7 @@ Last updated 2026-10-19.
 | v10 | relabelled Gemini training rows | test_clean 92.2 bf16, 93.1 on the phone file |
 | v11 | `pipe_signed` output instead of JSON | test_clean 92.4 bf16, 92.2 on the phone file, 21 output tokens instead of 45 |
 | v11-trim38k | vocabulary cut from 248k to 38k tokens, no retraining | same accuracy, 343 MB instead of 529, ~45% faster generation |
+| v11-trim38k-L20 | 4 of 24 layers removed, healed against v11-trim38k | test_clean same (92.4 bf16), numbers_clean −2; 288 MB, ~24% faster; not in the app |
 | (MTP) | trained the MTP layer for speculative decoding | 98% acceptance, +87% on desktop, no gain on the Pixel 8; parked |
 
 ## How to read the numbers
@@ -63,6 +64,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v10 | 92.2 | **93.1** | **93.1** | 78.9 | 79.2 | **79.2** |
 | v11 (pipe) | **92.4** | 92.4 | 92.2 | **79.2** | 78.9 | 78.9 |
 | v11-trim38k | 92.4 (F16) | 92.4 | 92.0 | 79.2 (F16) | 78.9 | 78.9 |
+| v11-trim38k-L20 | 92.4 | | 91.8 | 77.3 | | 76.3 |
 
 ### On the original labels
 
@@ -195,6 +197,15 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11-trim38k` (bf16) and `...-trim38k-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the benchmarked file). hishab_offline now downloads it (343 MB, about a minute on Wi-Fi).
 - **In the app on the Pixel 8:** the same 4 test messages as v11 give the same answers, read in 1.1 s / 0.7 s / 0.7 s against v11's 1.8 / 1.3 / 1.6 s; warm-up generation 47.7 tok/s against 32.3. Prompt reading with the cached system prompt also dropped (284 vs 467 ms).
 
+### v11-trim38k-L20: depth pruning, tried (2026-10-20)
+- **Idea:** after the vocabulary trim, the 24 layers are 80% of the parameters, and on the phone generation time scales with bytes read per token. Remove the layers the task needs least, then heal the rest. `ml/modal_app/prune_layers.py`.
+- **Which layers:** skip each layer in turn and measure top-1 agreement with the full model on test_clean answer tokens. Layer 0 is essential (3.6% agreement without it), the last layer (23, full attention) is next (90.5%); the middle linear-attention layers barely matter: 8 (99.3%), 9 (99.2%), 12 (99.2%), 13 (99.1%). Only linear-attention layers were candidates: the 6 full-attention layers do the copying extraction relies on. llama.cpp reads each layer's kind from the GGUF (`attention.recurrent_layers`), so an irregular pattern is fine on the phone.
+- **Cut and heal:** layers 8, 9, 12, 13 removed (0.54B to 0.45B parameters). Agreement with v11-trim38k: 96.4% straight after cutting. Healed with all weights trainable on train_v10, 2 epochs, lr 2e-5, loss = KL to v11-trim38k on answer tokens + 0.2 x CE on the gold; 34 min on one A100. Agreement after: 98.2%.
+- **Accuracy, bf16 (v11 in brackets):** test_clean **92.4** (92.4), test 80.7 (80.7), numbers 84.0 (85.4), numbers_clean **77.3** (79.2), validation 78.0 (79.2). Q4_K_M-imat (v11-trim38k in brackets): test_clean 91.8 (92.0), numbers_clean 76.3 (78.9). So everyday messages hold; spelled-out amounts lose about 2 points.
+- **Size:** Q4_K_M-imat 343 to **288 MB** (−16%); kiln reports 0.29 GB resident (0.34).
+- **Speed on the Pixel 8 (kiln-cli, CPU, raw prompt, 20 and 24 layers alternating with 15 s rest, 6 rounds):** 20 layers faster in every round, by 10% to 62%, median **+24%**. The phone throttled from round 3 (24-layer speed fell from 51 to 30 tok/s), so only the paired ratios are meaningful.
+- **Verdict:** a real trade, not a free win like the vocabulary trim. Not in the app: it costs ~2.6 points on spelled-out amounts for ~24% speed. Worth reconsidering for slow phones (the Snapdragon 680 runs at ~10 tok/s), or after v12 data, healed again.
+
 ### MTP (multi-token prediction): tried, parked (2026-10-20)
 - **Idea:** Qwen3.5-0.8B has one MTP layer (~25M parameters) that guesses the token after next from the main model's last hidden state. llama.cpp (`--spec-type draft-mtp`) lets the main model check the guesses in one pass, so greedy answers stay the same and only speed can change.
 - **Found:** our fine-tuned runs had lost the layer (transformers' `Qwen3_5ForCausalLM` has no MTP module, so the merged models never saved `mtp.*`; the GGUFs say `nextn_predict_layers=1` but have no block 24). `ml/modal_app/mtp.py` grafts the base model's layer back and benchmarks; `ml/modal_app/train_mtp.py` trains only the MTP layer (main model frozen) to match v11's own next-token distribution (KL), 2 epochs on train_v10, 7.5 min on one A100.
@@ -208,7 +219,8 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2). Still open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
 2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
 3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
-4. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
+4. **Amounts under 10 taka.** "5 taka rickshaw bhara" comes out as `-500` (v11-trim38k and L20 alike). No training row has an amount under 10, and a lone "5" in training almost always means "5 hajar" or "5 sho"; the eval sets cannot see it (smallest amounts: test_clean 15, numbers_clean 10). v12 needs a few hundred 1 to 9 taka rows ("2 tk cha", "৫ টাকা") and some in the eval sets.
+5. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
 
 ---
 
