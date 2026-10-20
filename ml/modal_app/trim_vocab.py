@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from modal_app.common import DATA_DIR, RUNS_DIR, VOLUMES, app, gguf_image, hf_secret  # noqa: E402
 
-SPLITS = ["train_v10", "validation", "test", "test_clean", "numbers", "numbers_clean"]
+SPLITS = ["train_v10", "train_v12", "validation", "test", "test_clean", "numbers", "numbers_clean", "small_amounts"]
 
 
 @app.function(image=gguf_image, cpu=8, memory=16384, timeout=60 * 60, volumes=VOLUMES, secrets=[hf_secret])
