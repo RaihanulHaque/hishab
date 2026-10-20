@@ -29,7 +29,7 @@ SYSTEM = ("You are a financial assistant who understands English, Bengali and Ba
 
 # (low, high, round-to) per slot size; most amounts people mention are roundish
 SIZE_RANGES = {
-    "tiny": (10, 100, 5), "small": (100, 1000, 10), "medium": (1000, 10000, 50),
+    "micro": (1, 9, 1), "tiny": (10, 100, 5), "small": (100, 1000, 10), "medium": (1000, 10000, 50),
     "large": (10000, 100000, 500), "huge": (100000, 1000000, 5000),
 }
 
@@ -38,6 +38,8 @@ def sample_amount(size: str, rng: random.Random, words: bool) -> int:
     """An amount of this size. Spoken amounts are round ("sare tin hajar", "bish hajar"): when
     the amount will be written in words only round values are drawn; digits may be anything."""
     lo, hi, step = SIZE_RANGES[size]
+    if size == "micro":  # 1 to 9 taka: the rounding below would push every value to 9
+        return rng.randint(lo, hi)
     r = rng.random()
     if words or r < 0.55:
         if hi >= 1000 and rng.random() < 0.3:      # half units so der / arai / sare appear

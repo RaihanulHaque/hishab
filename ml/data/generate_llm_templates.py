@@ -30,7 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hishab.schema import CATEGORIES  # noqa: E402
 
-SIZES = ("tiny", "small", "medium", "large", "huge")
+SIZES = ("micro", "tiny", "small", "medium", "large", "huge")
 
 PERSONAS = [
     "university student in Dhaka living in a mess", "garment worker in Gazipur", "housewife in Chattogram managing the family budget",
@@ -70,7 +70,51 @@ STYLE_NOTES = {
 }
 
 
-def prompt_for(lang: str, persona: str, topic: str, n: int, seed: int) -> str:
+# --focus micro: every message has at least one 1 to 9 taka item. The v11 model read "5 taka rickshaw
+# bhara" as 500 because no training amount was under 10 and a lone "5" always meant "5 hajar".
+MICRO_TOPICS = [
+    "a single cheap thing: a toffee, chocolate, chewing gum, a paan, a cup of village-stall tea, a samosa or singara",
+    "photocopy and printing (pages at 2 or 3 taka each), a pen, a pencil, an eraser, a khata",
+    "very short rides: leguna, shared auto, local bus stop or two, rickshaw for one lane, a ferry ghat toll",
+    "giving a coin or small note to a beggar, a mosque or madrasa box, a tip to a helper, a toll at a bridge",
+    "children: a balloon, chips, a lollipop, ice-lolly, school canteen snack, small eid salami to a little cousin",
+    "household small change: a matchbox, a candle, a single egg, a lemon, chili, coriander, a pack of salt",
+    "mobile and digital: SMS pack, a tiny data top-up, a bKash or Nagad charge of a few taka, a parking fee",
+    "a busy day where one item cost only a few taka and others cost much more (mix tiny and big amounts)",
+    "found or received a few taka (change from a friend, a child got a few taka), also money given",
+    "a mix of very small and normal items in one message, written quickly",
+]
+
+MICRO_RULES = """
+SMALL-AMOUNT FOCUS (this batch): every message must contain at least one transaction of size micro (1 to 9 taka:
+a toffee, a photocopy page, a short leguna ride, a coin to a beggar). About half the messages should also contain a
+normal-sized item (tiny/small/medium) next to it, so small and large amounts appear together. Write the placeholder where
+the number goes, e.g. {micro_examples}. Never write
+the amount itself, not even in words. Count words for items are fine ("2 ta chocolate", "3 page") but then the
+placeholder is the total paid for them, not a unit price: do not write "per piece" or "each".
+"""
+
+
+MICRO_EXAMPLES = {  # in the batch's own language: Banglish examples pulled English batches into Banglish
+    "banglish": '"{A1} taka diye ekta chocolate", "photocopy {A1} tk", "bhikkhuk ke {A1} taka dilam"',
+    "bangla": '"{A1} টাকা দিয়ে একটা চকলেট", "ফটোকপি {A1} টাকা", "ভিক্ষুককে {A1} টাকা দিলাম"',
+    "mixed": '"chocolate {A1} টাকা", "photocopy {A1} tk", "ভিক্ষুককে {A1} taka dilam"',
+    "english": '"bought a toffee for {A1} taka", "photocopies {A1} tk", "gave a beggar {A1} taka" (write plain English, '
+               'not Banglish; Bangladeshi words like rickshaw, leguna, paan, singara are fine)',
+}
+
+GUIDELINE_NOTE = """
+Label every slot exactly by this labelling guideline (category and type rules are binding; e.g. tutoring income and
+business sales are salary, a present you bought is shopping while money given is gift, study photocopies are tuition):
+
+"""
+
+
+def _guideline() -> str:
+    return (Path(__file__).resolve().parents[2] / "docs" / "LABELLING_GUIDELINE.md").read_text(encoding="utf-8")
+
+
+def prompt_for(lang: str, persona: str, topic: str, n: int, seed: int, focus: str = "") -> str:
     cats = ", ".join(CATEGORIES)
     return f"""You generate training data for a Bangladeshi personal-finance app. Write {n} DIFFERENT messages that a person
 might type into the app to record money they spent or received. The person: {persona}. Theme for this batch: {topic}
@@ -87,27 +131,56 @@ RULES (strict):
    Simpler: avoid totals.
 5. For each placeholder give a slot: id, a short "description" (what the entry should be called in the ledger, 1-4 words, in
    the message's own language), "category" from exactly this list: {cats}, "type" income or expense, and "size" from
-   tiny (10-100), small (100-1000), medium (1000-10000), large (10000-100000), huge (100000-1000000) in taka.
+   micro (1-9), tiny (10-100), small (100-1000), medium (1000-10000), large (10000-100000), huge (100000-1000000) in taka.
    Use sizes realistically (tea is tiny, rent is medium/large, salary large, a car huge).
 6. Also give an English "translation" of the message with the same placeholders in the same positions.
 7. Keep the message 4 to 40 words. Make them sound like real people, with real item names (not "item", "something").
 8. Loan direction matters: money I borrowed or someone repaid me is income; money I lent or repaid is expense.
 9. Output ONLY a JSON array of {n} objects with keys: text, translation, slots. slots is a list of
    {{"id","description","category","type","size"}}. No prose, no code fence.
-"""
+""" + (MICRO_RULES.replace("{micro_examples}", MICRO_EXAMPLES[lang]) + GUIDELINE_NOTE + _guideline() if focus == "micro" else "")
 
 
 _ARR = re.compile(r"\[.*\]", re.S)
 
 
+def run_claude(prompt: str, model: str | None, timeout: int) -> list[dict]:
+    """Claude Code in print mode with no tools: the reply is the JSON array."""
+    with tempfile.TemporaryDirectory() as d:
+        cmd = ["claude", "-p", "--output-format", "text", "--tools", "", "--system-prompt",
+               "You write synthetic training data for a Bangladeshi personal-finance app. Reply with JSON only."]
+        if model:
+            cmd += ["--model", model]
+        try:
+            r = subprocess.run(cmd + [prompt], cwd=d, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return []
+        text = r.stdout
+    m = _ARR.search(text)
+    if not m:
+        return []
+    try:
+        arr = json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return []
+    return arr if isinstance(arr, list) else []
+
+
+CODEX_EFFORT = "medium"  # the default (high) spends 15+ min reasoning over one batch with the guideline
+
+
 def run_codex(prompt: str, model: str | None, timeout: int) -> list[dict]:
     with tempfile.TemporaryDirectory() as d:
         out = Path(d) / "out.txt"
-        cmd = ["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out)]
+        cmd = ["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out),
+               "-c", f"model_reasoning_effort={CODEX_EFFORT}"]
         if model:
             cmd += ["-m", model]
         cmd.append(prompt)
-        subprocess.run(cmd, cwd=d, capture_output=True, text=True, timeout=timeout)
+        try:
+            subprocess.run(cmd, cwd=d, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return []
         text = out.read_text() if out.exists() else ""
     m = _ARR.search(text)
     if not m:
@@ -161,6 +234,8 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--timeout", type=int, default=600)
+    ap.add_argument("--backend", choices=["codex", "claude"], default="codex")
+    ap.add_argument("--focus", choices=["", "micro"], default="", help="micro: every message has a 1-9 taka item")
     args = ap.parse_args()
 
     rng = random.Random(args.seed)
@@ -169,16 +244,22 @@ def main() -> None:
         for line in args.out.read_text().splitlines():
             if line.strip():
                 seen.add(norm(json.loads(line)["text"]))
-    jobs = [(rng.choice(PERSONAS), rng.choice(TOPICS), rng.randrange(10**6)) for _ in range(args.batches)]
+    topics = MICRO_TOPICS if args.focus == "micro" else TOPICS
+    jobs = [(rng.choice(PERSONAS), rng.choice(topics), rng.randrange(10**6)) for _ in range(args.batches)]
+    runner = run_claude if args.backend == "claude" else run_codex
+    tag = f"{args.backend}:{args.model or 'default'}"
 
     def one(job):
         persona, topic, seed = job
-        raw = run_codex(prompt_for(args.lang, persona, topic, args.per_batch, seed), args.model, args.timeout)
+        raw = runner(prompt_for(args.lang, persona, topic, args.per_batch, seed, args.focus), args.model, args.timeout)
         rows = []
         for t in raw:
             v = validate(t, args.lang)
+            if v and args.focus == "micro" and not any(s["size"] == "micro" for s in v["slots"]):
+                v = None
             if v:
                 v["persona"] = persona
+                v["source"] = tag
                 rows.append(v)
         return len(raw), rows
 
