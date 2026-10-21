@@ -13,6 +13,7 @@ Last updated 2026-10-19.
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
 - **Shorter output (v11):** the same model and data trained to write `description|-800|category` lines instead of JSON. It ties v10 (test_clean 92.4 bf16, 92.2 at Q4_K_M-imat) with 21 output tokens per message instead of 45, so about 0.6 s instead of 1.3 s on the Pixel 8. The app needs a pipe parser before it can use it.
 - **Smaller and faster (v11-trim38k):** v11 with its 248k-token vocabulary cut to the 38k tokens English, Bangla and Banglish need. No retraining. Q4_K_M-imat drops from 529 MB to **343 MB** and generates **~45% faster** on the Pixel 8 (51.5 vs 35.4 tok/s), with the same accuracy (F16 identical on both clean sets).
+- **Best model: v13-trim38k** (not yet in the app): template and lexicon rows relabelled, labelling guideline v2. Q4_K_M-imat: test_clean_v2 **94.2**, numbers_clean_v2 **89.2** (v12-trim38k: 89.6 and 74.5); on the old clean sets 94.3 and 90.2.
 - **Next:** relabel the income and gift categories of the Codex-template training rows, which is what `numbers_clean` is waiting on.
 
 ## Timeline
@@ -31,6 +32,7 @@ Last updated 2026-10-19.
 | v11 | `pipe_signed` output instead of JSON | test_clean 92.4 bf16, 92.2 on the phone file, 21 output tokens instead of 45 |
 | v11-trim38k | vocabulary cut from 248k to 38k tokens, no retraining | same accuracy, 343 MB instead of 529, ~45% faster generation |
 | v12 (trim38k) | +1,041 rows with 1 to 9 taka amounts | small_amounts 23.0 → 81.6 on the phone file, every small amount read right; other sets within about 1 point |
+| v13 (trim38k) | template + lexicon rows relabelled; labelling guideline v2 | numbers_clean 78.2 → 90.2, test_clean 91.8 → 94.3 on the phone file; v2 clean sets 94.2 / 89.2 |
 | v11-trim38k-L20 | 4 of 24 layers removed, healed against v11-trim38k | test_clean same (92.4 bf16), numbers_clean −2; 288 MB, ~24% faster; not in the app |
 | (MTP) | trained the MTP layer for speculative decoding | 98% acceptance, +87% on desktop, no gain on the Pixel 8; parked |
 
@@ -67,6 +69,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v11-trim38k | 92.4 (F16) | 92.4 | 92.0 | 79.2 (F16) | 78.9 | 78.9 |
 | v11-trim38k-L20 | 92.4 | | 91.8 | 77.3 | | 76.3 |
 | v12-trim38k | 92.4 (bf16, untrimmed) | | 91.8 | 78.2 (bf16, untrimmed) | | 78.2 |
+| v13-trim38k | 94.3 (bf16, untrimmed) | | **94.3** | 90.9 (bf16, untrimmed) | | **90.2** |
 
 ### On the original labels
 
@@ -87,6 +90,7 @@ on about 14% of rows.
 | v11 | 20,057 | 80.7 | 80.7 | **85.4** | **85.4** | | pipe output; Q4_K_M-imat 80.5 / 84.6 |
 | v11-trim38k-L20 | 20,057 | 80.7 | | 84.0 | | | 4 layers removed; Q4_K_M-imat not run on test / numbers |
 | v12 | 21,098 | 79.5 | | 84.3 | | | small-amount rows; v12-trim38k Q4_K_M-imat 79.2 / 84.3 |
+| v13 | 19,798 | 79.3 | | 76.2 | | | guideline v2; v13-trim38k Q4_K_M-imat 79.0 / 74.8 (old template gold, see v13) |
 | v11-trim38k | 20,057 | | 80.5 | | 85.2 | | v11, vocabulary 38k; Q4_K_M-imat 80.3 / 85.2 |
 
 ## Per version
@@ -201,6 +205,17 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Published 2026-10-19:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11-trim38k` (bf16) and `...-trim38k-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the benchmarked file). hishab_offline now downloads it (343 MB, about a minute on Wi-Fi).
 - **In the app on the Pixel 8:** the same 4 test messages as v11 give the same answers, read in 1.1 s / 0.7 s / 0.7 s against v11's 1.8 / 1.3 / 1.6 s; warm-up generation 47.7 tok/s against 32.3. Prompt reading with the cached system prompt also dropped (284 vs 467 ms).
 
+### v13: template and lexicon labels fixed, labelling guideline v2 (2026-10-21)
+- **Problem:** v12 still lost most of its `numbers_clean` messages on categories (64 of 69 misses), mainly earned income not labelled `salary`. The 8,775 Codex-template rows and the 1,691 number-word copies had never been checked against the guideline; the copies even kept the pre-v10 Gemini labels of the rows they were made from.
+- **Step 1, guideline v1, two labellers (`ml/data/relabel_templates.sh`):** the 10,466 template and number-word rows relabelled from scratch by Sonnet (`claude -p`) and a second labeller: Gemini 3.8 Flash ran out of agy credits after 520 rows, so Codex (7,041 rows, low reasoning effort, run with its own plugin-free `CODEX_HOME` because the user's Codex re-fetched two git plugin marketplaces on every call) and Opus for the rest (3,425). On the 121-row pilot each second labeller agreed with Sonnet 92 to 94%, and Codex/Gemini/Opus agree with each other 98%. Merge (`apply_relabel.py --amount-locked`, amounts are exact by construction so only categories/types may move): 7,890 confirmed, 1,276 relabelled, 1,210 dropped (labellers disagree), 90 dropped (agreed on other amounts) → `train_v13_v1.jsonl`.
+- **Spot check and guideline v2:** the owner reviewed 40 relabelled rows and changed the rules rather than the labels (`docs/LABELLING_GUIDELINE.md` v2): money sent to or received from family follows its stated purpose (bazar → `grocery`, fees → `tuition` income), `gift` only without a purpose; wages I pay are `salary` expense; a driver's daily "joma" to the vehicle owner is `transport`; regular sales are `salary`, a one-off sale is `other`; scholarships stay `salary`, school trips `tuition`. A decision order (transaction? → direction → loans → stated purpose → family/earned) and small explicit tie-breaks (expected money is a plan, a late fee takes the bill's category, a present is labelled by what it is, an unspecified book is `tuition`) were added.
+- **Step 2, guideline v2 (`ml/data/relabel_v2.sh`, `ml/data/build_v13.py`):** Opus relabelled all 20,795 training rows (all sources but the `[]` negatives) and Opus + Sonnet the 1,221 eval rows. Training: a v2 change is applied only when Sonnet, asked separately on the 1,658 changed rows, agrees and the amounts equal the current label (Opus misread a few Banglish amounts, e.g. "pochash hajar" as 25,000): 1,252 applied, 406 kept (mostly loan-direction flips on ambiguous wording, 48 of 57). Biggest applied changes: earned income from `other`/`tuition` to `salary` (378 + 83), wages paid to `salary` expense (121), prizes to `gift` (118), donations to `other` (90); 1,196 of the changed rows were programmatic-lexicon rows, never checked before. Eval: new `test_clean_v2` (482 of 518, 84 labels differ from the old gold), `numbers_clean_v2` (306 of 357, 58 differ), `small_amounts_v2` (76 of 87), `validation_v2` (agreed label where both agree, else the old one; used for epoch selection). The old clean sets are kept for comparison.
+- **Data:** `train_v13.jsonl`, 19,798 rows (v12: 21,098; 1,300 ambiguous template rows dropped).
+- **Training:** v12 recipe on `train_v13`, epoch picked on `validation_v2` (`train.py --val-split`), best epoch 2, 92 min; trimmed to 38k tokens (6,037 used by the data, same as v12).
+- **Result, Q4_K_M-imat (v12-trim38k in brackets):** test_clean_v2 **94.2** (89.6), numbers_clean_v2 **89.2** (74.5), small_amounts_v2 **85.5** (82.9); on the old clean sets test_clean **94.3** (91.8), numbers_clean **90.2** (78.2), small_amounts **86.2** (81.6); test 79.0 (79.2); numbers 74.8 (84.3). bf16: test_clean 94.3, numbers_clean 90.9, small_amounts 88.5, test_clean_v2 94.4, numbers_clean_v2 89.5, small_amounts_v2 88.2. All 90 small amounts still read right. Wrong messages on test_clean (bf16): 27 (v12: 36), count 10, category 13; numbers_clean 29 (v12: 69).
+- **The `numbers` drop is the relabel, checked:** of the 52 `numbers` messages v12 got right and v13 gets wrong, 29 are exactly the label both v2 labellers agreed on (the old template gold is what changed), 14 are rows the v2 labellers disagree on, 9 are real regressions. On `test` the same split is 9 / 4 / 4. The original-label sets now measure agreement with the old conventions.
+- **Verdict:** clear win on every clean set, biggest where the labels were wrong (numbers_clean +12). Not published or in the app yet.
+
 ### v12: amounts under 10 taka (2026-10-21)
 - **Problem:** "5 taka rickshaw bhara" came out as `-500`. No training row had an amount under 10: the template filler's smallest size (`tiny`) was 10 to 100 taka, and a lone "5" in training almost always meant "5 hajar" or "5 sho". The eval sets could not see it (smallest amounts: test_clean 15, numbers_clean 10).
 - **Data:** a `micro` size (1 to 9 taka) in `fill_templates.py`, and `generate_llm_templates.py --focus micro`, where every message has at least one 1 to 9 taka item (toffee, photocopy page, leguna, coin to a beggar, a few taka found or repaid), often next to a normal-sized one. The labelling guideline is now part of that prompt. Generated by Claude Sonnet through `claude -p` (`ml/data/gen_micro.sh`): 434 templates. Notes from the pilot: Haiku's messages were noticeably less natural; Codex timed out (15 min with nothing back per batch of 10 to 25, at default and medium reasoning effort); without the guideline in the prompt Sonnet labelled tutoring income as `tuition` and bought presents as `gift`; the first "English" batch came out entirely in Banglish (the examples were Banglish) and was relabelled, then regenerated with English examples. Amounts are filled by `numwords`, so labels are exact by construction (digits, Bangla digits, words: "panch", "পাঁচ", "৫").
@@ -231,7 +246,7 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 
 ## Open problems
 
-1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2). Still open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
+1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2) and for the template, number-word and lexicon rows in v13 (numbers_clean 90.2). Was open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
 2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
 3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
 4. ~~**Amounts under 10 taka.**~~ **Fixed in v12** (small_amounts 23.0 to 81.6, every small amount read right). Was: "5 taka rickshaw bhara" came out as `-500` (v11-trim38k and L20 alike). No training row has an amount under 10, and a lone "5" in training almost always means "5 hajar" or "5 sho"; the eval sets cannot see it (smallest amounts: test_clean 15, numbers_clean 10). v12 needs a few hundred 1 to 9 taka rows ("2 tk cha", "৫ টাকা") and some in the eval sets.
@@ -264,6 +279,7 @@ by validation loss is kept.
 | v11-trim38k (v11 weights, vocabulary sliced) | no training | | | | | |
 | v11-trim38k-L20 (4 layers removed, healed) | 2 (healing, KL to v11-trim38k) | | | | | 34 min |
 | v12 (as v11, + 1,041 small-amount rows) | 3 | 2 | 0.2666 | .2969 / .2666 / .2975 | 0.012 | 123 min |
+| v13 (as v12, relabelled train, epoch on validation_v2) | 3 | 2 | 0.2558 | .2945 / .2558 / .2793 | 0.008 | 92 min |
 
 Validation loss bottoms out at epoch 2 or 3 every time, then rises while train loss keeps
 falling. More than 3 epochs is overfitting on this data. v11's losses are per token of a much
@@ -283,6 +299,7 @@ Which dataset each model version was trained and evaluated on:
 | v7, v8, v9 | 20,333 | `splits/train.jsonl` | `ryuma007/hishab-synthetic-v4` | validation, test, numbers |
 | v10, v11, v11-trim38k | 20,057 | `splits/train_v10.jsonl` | `ryuma007/hishab-synthetic-v5` | validation, test, test_clean, numbers, numbers_clean |
 | v12, v12-trim38k | 21,098 | `splits/train_v12.jsonl` | `ryuma007/hishab-synthetic-v6` | validation, test, test_clean, numbers, numbers_clean, small_amounts |
+| v13, v13-trim38k | 19,798 | `splits/train_v13.jsonl` | not yet published | validation_v2, test, test_clean, test_clean_v2, numbers, numbers_clean, numbers_clean_v2, small_amounts, small_amounts_v2 |
 
 "Not saved" sets were built by `ml/data/build_splits.py` from the `ml/datasets/synthetic_*.jsonl`
 sources as they stood then. Validation, test and numbers are the same rows in every dataset
@@ -291,18 +308,18 @@ version from v3 (numbers from v4 on). Dataset v5 adds the relabelled `test_clean
 
 Train rows by source:
 
-| source | v3 | v4 | v5 | v6 | v7 (= v8, v9) | v10 (= v11) | v12 |
-|---|---|---|---|---|---|---|---|
-| Gemini base rows | 4,240 | 4,240 | 4,240 | 4,240 | 4,240 | 3,976 relabelled | 3,976 |
-| Gemini hard rows | 169 | 169 | 169 | 169 | 169 | 157 relabelled | 157 |
-| programmatic lexicon | | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 |
-| hand-written | | 113 | 155 | 155 | 155 | 155 | 155 |
-| Codex templates | | | | 7,327 | 7,328 (refilled) | 7,328 | 7,328 |
-| Codex Bangla word-amounts | | | | | 1,447 | 1,447 | 1,447 |
-| digits rewritten as words | | | | 1,691 | 1,691 | 1,691 | 1,691 |
-| no-transaction rows (`[]`) | | | | | 303 | 303 | 303 |
-| Sonnet small-amount templates (1 to 9 taka) | | | | | | | 1,041 |
-| **total** | **4,409** | **9,522** | **9,564** | **18,582** | **20,333** | **20,057** | **21,098** |
+| source | v3 | v4 | v5 | v6 | v7 (= v8, v9) | v10 (= v11) | v12 | v13 (relabelled) |
+|---|---|---|---|---|---|---|---|---|
+| Gemini base rows | 4,240 | 4,240 | 4,240 | 4,240 | 4,240 | 3,976 relabelled | 3,976 | 3,976 |
+| Gemini hard rows | 169 | 169 | 169 | 169 | 169 | 157 relabelled | 157 | 157 |
+| programmatic lexicon | | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 | 5,000 |
+| hand-written | | 113 | 155 | 155 | 155 | 155 | 155 | 155 |
+| Codex templates | | | | 7,327 | 7,328 (refilled) | 7,328 | 7,328 | 6,510 |
+| Codex Bangla word-amounts | | | | | 1,447 | 1,447 | 1,447 | 1,304 |
+| digits rewritten as words | | | | 1,691 | 1,691 | 1,691 | 1,691 | 1,352 |
+| no-transaction rows (`[]`) | | | | | 303 | 303 | 303 | 303 |
+| Sonnet small-amount templates (1 to 9 taka) | | | | | | | 1,041 | 1,041 |
+| **total** | **4,409** | **9,522** | **9,564** | **18,582** | **20,333** | **20,057** | **21,098** | **19,798** |
 
 Train rows by language:
 
@@ -315,6 +332,7 @@ Train rows by language:
 | v10 | 9,161 | 5,063 | 4,031 | 1,802 |
 | v11 | same as v10 | | | |
 | v12 | 9,653 | 5,288 | 4,190 | 1,967 |
+| v13 | 8,930 | 5,136 | 3,866 | 1,866 |
 
 Transactions per message in train:
 
@@ -327,6 +345,7 @@ Transactions per message in train:
 | v10 | 458 | 8,373 | 8,618 | 1,932 | 676 |
 | v11 | same as v10 | | | | |
 | v12 | 458 | 8,778 | 9,224 | 1,962 | 676 |
+| v13 | 458 | 8,388 | 8,494 | 1,849 | 609 |
 
 ## Test set, bf16
 
@@ -347,6 +366,8 @@ Transactions per message in train:
 | v11-trim38k-L20 on `test_clean` (476) | 92.4 | 96.2 | 96.8 | 96.8 | 97.3 | 99.9 | 88.0 | 97.4 | 96.0 | 91.7 |
 | v12 | 79.5 | 89.5 | 93.6 | 93.4 | 92.0 | 99.3 | 70.8 | 87.2 | 80.8 | 90.7 |
 | v12 on `test_clean` (476) | 92.4 | 96.3 | 97.3 | 97.1 | 97.6 | 99.6 | 87.4 | 96.5 | 98.0 | 91.7 |
+| v13 | 79.3 | 89.5 | 91.7 | 91.7 | 92.5 | 99.3 | 70.3 | 89.6 | 79.8 | 88.0 |
+| v13 on `test_clean` (476) | **94.3** | **97.3** | 97.9 | 97.9 | **98.1** | 99.5 | **90.6** | 97.4 | 97.0 | **95.8** |
 
 Wrong messages by first failing field, out of 518:
 
@@ -367,6 +388,8 @@ Wrong messages by first failing field, out of 518:
 | v11-trim38k-L20 on `test_clean` (of 476) | 36 | 15 | 0 | 1 | 20 | medical to food 2, gift to salary 2, other to transport 1 |
 | v12 | 106 | 33 | 1 | 5 | 67 | shopping to tuition 8, gift to shopping 6, other to salary 5 |
 | v12 on `test_clean` (of 476) | 36 | 13 | 1 | 3 | 19 | medical to food 3, gift to tuition 2, salary to tuition 1 |
+| v13 | 107 | 43 | 0 | 5 | 59 | shopping to tuition 8, other to salary 8, gift to shopping 8 |
+| v13 on `test_clean` (of 476) | **27** | 10 | 0 | 4 | 13 | gift to tuition 3, medical to grocery 2, salary to tuition 1 |
 
 Category is two-thirds of the errors up to v9, and most of those swaps are cases where the Gemini
 gold disagrees with itself (ERROR_ANALYSIS.md). That is why test exact sat near 86 to 88
@@ -389,6 +412,8 @@ regardless of data, until v10 fixed the labels.
 | v11-trim38k-L20 on `numbers_clean` (317) | 77.3 | 84.0 | 99.4 | 99.4 | 84.5 | 98.8 | 72.9 | 81.2 | 78.6 | 80.3 |
 | v12 | 84.3 | 88.6 | 100.0 | 99.7 | 89.3 | 99.5 | 82.6 | 79.8 | 88.9 | 90.5 |
 | v12 on `numbers_clean` (317) | 78.2 | 84.8 | 100.0 | 99.7 | 85.5 | 99.2 | 73.6 | 80.0 | 88.1 | 78.8 |
+| v13 | 76.2 | 82.0 | 99.4 | 98.3 | 84.1 | 98.2 | 73.2 | 79.8 | 75.6 | 78.4 |
+| v13 on `numbers_clean` (317) | **90.9** | **93.7** | 99.7 | 99.1 | **94.6** | 98.8 | **90.7** | **91.2** | **92.9** | **89.4** |
 
 Wrong messages by first failing field, out of 357:
 
@@ -407,6 +432,8 @@ Wrong messages by first failing field, out of 357:
 | v11-trim38k-L20 on `numbers_clean` (of 317) | 72 | 2 | 0 | 6 | 64 | salary to other 8, tuition to other 7, salary to tuition 5 |
 | v12 | 56 | 0 | 1 | 3 | 52 | gift to shopping 7, other to transport 6, gift to other 6 |
 | v12 on `numbers_clean` (of 317) | 69 | 0 | 1 | 4 | 64 | salary to other 10, salary to transport 6, salary to tuition 5 |
+| v13 | 85 | 2 | 4 | 10 | 69 | gift to shopping 12, shopping to tuition 9, tuition to salary 7 |
+| v13 on `numbers_clean` (of 317) | **29** | 1 | 2 | 6 | 20 | transport to entertainment 2, salary to other 2, gift to salary 2 |
 
 From v6 on, the model reads spelled-out amounts almost perfectly at full precision. What is left
 is category convention, plus v7's 20 income/expense flips. v11, where one `+` or `-` carries the
@@ -421,13 +448,30 @@ type, flips 9 on numbers (v10: 4) but the same 4 on test_clean, so watch type on
 | v11-trim38k | Q4_K_M-imat GGUF | 23.0 | 43.8 | | | | | | | | |
 | v12 | bf16 on HF | 80.5 | 86.1 | 98.9 | 98.9 | 86.4 | 97.1 | 93.3 | 57.1 | 88.9 | 77.8 |
 | v12-trim38k | Q4_K_M-imat GGUF | **81.6** | **88.3** | | | | | | | | |
+| v13 | bf16 on HF | 88.5 | 92.9 | 100.0 | 100.0 | 93.6 | 98.6 | 93.3 | 76.2 | 94.4 | 88.9 |
+| v13-trim38k | Q4_K_M-imat GGUF | **86.2** | **91.8** | | | | | | | | |
 
 Wrong messages, bf16 v12: 17 (count 1, amount 0, type 4, category 12; other to gift 2, other to shopping 2, salary to other 2).
-Small amounts read right (Q4_K_M-imat): v11-trim38k 31 of 90 (58 multiplied by 10, 100 or 1000), v12-trim38k **90 of 90**.
+Small amounts read right (Q4_K_M-imat): v11-trim38k 31 of 90 (58 multiplied by 10, 100 or 1000), v12-trim38k **90 of 90**, v13-trim38k **90 of 90**.
+Wrong messages, bf16 v13: 10 (count 0, amount 0, type 2, category 8; grocery to food 2).
+
+## Guideline v2 sets (from v13)
+
+The same held-out messages relabelled under labelling guideline v2 by Opus and Sonnet independently;
+rows where they disagree are dropped (`ml/data/build_v13.py`).
+
+| version | path | test_clean_v2 (482) | numbers_clean_v2 (306) | small_amounts_v2 (76) |
+|---|---|---|---|---|
+| v12-trim38k | Q4_K_M-imat GGUF | 89.6 | 74.5 | 82.9 |
+| v13 | bf16 on HF | 94.4 | 89.5 | 88.2 |
+| v13-trim38k | Q4_K_M-imat GGUF | **94.2** | **89.2** | **85.5** |
+
+v13 bf16 per field, test_clean_v2: count 97.5, amount 97.5, category 98.5, type 99.6; wrong 27 (count 12, type 3, category 12).
+numbers_clean_v2: count 99.7, amount 99.0, category 93.7, type 98.5; wrong 32 (count 1, amount 2, type 7, category 22; salary to other 3).
 
 ## Phone files (GGUF quantizations)
 
-File sizes (v11-trim38k and v12-trim38k: F16 1,076, Q6_K 443, Q4_K_M-imat 343, Q4_0-imat 316; v11-trim38k-L20: Q4_K_M-imat 288): F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
+File sizes (v11-trim38k, v12-trim38k and v13-trim38k: F16 1,076, Q6_K 443, Q4_K_M-imat 343, Q4_0-imat 316; v11-trim38k-L20: Q4_K_M-imat 288): F16 1,517 MB, Q8_0 812, Q6_K 630, Q5_K_M 578, Q4_K_M 529, Q4_0 502, IQ4_XS 504,
 Q3_K_M 466, IQ3_M 454. The "-e8" variants of v6, which keep embeddings and output at Q8_0, add
 40 to 60 MB and score within a point of the plain quants.
 
@@ -446,11 +490,13 @@ Test set, exact:
 | v11 | | | 80.7 | 81.1 | 80.5 | | | | | |
 | v11-trim38k | 80.3 | | 80.5 | | 80.3 | | 80.1 | | | |
 | v12-trim38k | | | | | 79.2 | | | | | |
+| v13-trim38k | | | | | 79.0 | | | | | |
 | v10 on `test_clean` | 92.2 | 92.2 | 93.1 | 92.6 | 93.1 | 92.9 | 93.7 | 92.9 | 93.5 | 92.6 |
 | v11 on `test_clean` | 92.4 | | 92.4 | 92.4 | 92.2 | | 92.6 | | | |
 | v11-trim38k on `test_clean` | 92.4 | | 92.4 | | 92.0 | | 92.9 | | | |
 | v11-trim38k-L20 on `test_clean` | | | | | 91.8 | | | | | |
 | v12-trim38k on `test_clean` | | | | | 91.8 | | | | | |
+| v13-trim38k on `test_clean` | | | | | **94.3** | | | | | |
 
 Numbers set, exact:
 
@@ -464,11 +510,13 @@ Numbers set, exact:
 | v11 | 85.4 (HF) | | | **85.4** | 84.9 | 84.6 |
 | v11-trim38k | | 85.4 | | 85.2 | | 85.2 |
 | v12 / v12-trim38k | 84.3 (HF) | | | | | 84.3 |
+| v13 / v13-trim38k | 76.2 (HF) | | | | | 74.8 |
 | v10 on `numbers_clean` | 78.9 (HF) | 78.9 | 78.9 | 79.2 | 79.8 | 79.2 |
 | v11 on `numbers_clean` | 79.2 (HF) | 79.2 | | 78.9 | 78.2 | 78.9 |
 | v11-trim38k on `numbers_clean` | | 79.2 | | 78.9 | | 78.9 |
 | v11-trim38k-L20 on `numbers_clean` | 77.3 (HF) | | | | | 76.3 |
 | v12 / v12-trim38k on `numbers_clean` | 78.2 (HF) | | | | | 78.2 |
+| v13 / v13-trim38k on `numbers_clean` | 90.9 (HF) | | | | | **90.2** |
 
 v10 on `numbers_clean`, the rest of the ladder: Q4_K_M 78.9, Q4_0 78.2, Q4_0-imat 77.9,
 IQ4_XS-imat 77.9, Q3_K_M-imat 77.3, IQ3_M-imat 79.5. Every quant down to IQ3_M stays within a
@@ -499,6 +547,8 @@ point of bf16 on both clean sets.
 | v11-trim38k-L20 | bf16 on HF | 79.9 | 85.4 | 84.4 | 90.5 |
 | v12 | bf16 on HF | 82.6 | 79.8 | 88.9 | 90.5 |
 | v12-trim38k | Q4_K_M-imat GGUF | 81.2 | 79.8 | 88.9 | 93.2 |
+| v13 | bf16 on HF | 73.2 | 79.8 | 75.6 | 78.4 |
+| v13-trim38k | Q4_K_M-imat GGUF | 71.8 | 79.8 | 68.9 | 78.4 |
 
 Through v8, Banglish was the same on both paths while Bangla dropped about 17 points even in
 BF16 GGUF, which has the same weights as HF. The cause was the training tokenizer, not llama.cpp
