@@ -181,7 +181,7 @@ Not from the eval pipeline: Pixel 8 speed (kiln) and the 20 spoken-amount probes
 | v11-trim38k | Q4_K_M-imat 51.5 | kiln-cli, 2026-10-19, 5 runs alternating with v11 | Q6_K 15/20, Q4_K_M-imat 16/20 | about 0.4 s to write a typical answer (v10 about 1.3 s) |
 | v11-trim38k-L20 | +24% generation vs v11-trim38k (median of 6 alternating pairs; phone throttled) |  |  |  |
 | v12-trim38k |  |  | Q6_K 18/20, Q4_K_M-imat 18/20 | in-app answers all right on 2026-10-21 ("5 taka rickshaw bhara" -5); speed not comparable (phone charging and throttled) |
-| v13-trim38k |  |  | Q6_K 15/20, Q4_K_M-imat 16/20 | borderline probes flip between runs ("oushudh", "১৫ হাজার ৫০০" missed as in v11-trim38k); detail in EXPERIMENTS.md |
+| v13-trim38k |  |  | Q6_K 15/20, Q4_K_M-imat 16/20 | in-app 2026-10-21, 5 of 6 right incl. both v2 rules (bou ke bazarer jonno -> grocery, bua er beton -> salary expense), "sat sho taka oushudh" as food; borderline probes flip between runs; speed not comparable (thermal status 2, charging) |
 
 ## Training
 

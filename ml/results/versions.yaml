@@ -186,5 +186,5 @@ versions:
     status: app
     measurements:
       probes: {Q6_K: 15/20, Q4_K_M-imat: 16/20}
-      notes: borderline probes flip between runs ("oushudh", "১৫ হাজার ৫০০" missed as in v11-trim38k); detail in EXPERIMENTS.md
+      notes: in-app 2026-10-21, 5 of 6 right incl. both v2 rules (bou ke bazarer jonno -> grocery, bua er beton -> salary expense), "sat sho taka oushudh" as food; borderline probes flip between runs; speed not comparable (thermal status 2, charging)
     app_quant: Q4_K_M-imat
