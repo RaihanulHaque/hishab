@@ -64,7 +64,8 @@ def eval_splits(eval_limit: int = 0) -> dict[str, list[dict]]:
     agree with each other under docs/LABELLING_GUIDELINE.md; see ml/data/relabel_merge.py), and small_amounts
     (1 to 9 taka items from held-out templates; ml/data/build_micro.py)."""
     out = {"validation": load_split("validation"), "test": load_split("test")}
-    for extra in ("numbers", "test_clean", "numbers_clean", "small_amounts"):
+    for extra in ("numbers", "test_clean", "numbers_clean", "small_amounts",
+                  "test_clean_v2", "numbers_clean_v2", "small_amounts_v2"):
         if (Path(DATA_DIR) / "splits" / f"{extra}.jsonl").exists():
             out[extra] = load_split(extra)
     if eval_limit:

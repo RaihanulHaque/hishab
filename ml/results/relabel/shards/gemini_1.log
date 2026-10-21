@@ -1,0 +1,98 @@
+1745 rows to label with gemini-3.8-flash-high (121 already done)
+batch 1/88: 20/20 in 285s
+batch 2/88: 20/20 in 77s
+batch 3/88: 20/20 in 249s
+batch 4/88: 20/20 in 93s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"4f714225-b02f-47a8-a959-1dcdcae32f74-1-2008"}\n'
+batch 5/88: 0/20 in 7s
+batch 6/88: 20/20 in 134s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"9ee3cf4c-8725-4db2-8a4c-d89c637a1224-1-2008"}\n'
+batch 7/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"40b159cd-7356-416b-a16c-681d9ba558de-1-2008"}\n'
+batch 8/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"498cc1cb-62eb-4b7e-8fab-a67bf3c31175-1-2008"}\n'
+batch 9/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"273ba882-46c6-41d8-bf37-21582dba12a0-1-2008"}\n'
+batch 10/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"90cb8b02-6525-4fb0-b31f-860ff12ed8fe-1-2008"}\n'
+batch 11/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"cba88401-0cb1-4ccd-adb0-184b24244b70-1-2008"}\n'
+batch 12/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"14492207-bbf4-417d-b09c-1bb14c54df9e-1-2008"}\n'
+batch 13/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"0042289c-19fb-40be-857a-93bce49d4a26-1-2008"}\n'
+batch 14/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"43f54736-424b-4ef2-963f-8287dae25ba0-1-2008"}\n'
+batch 15/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"5ac88a12-5235-4426-8a8b-324fd28f8ef8-1-2008"}\n'
+batch 16/88: 0/20 in 5s
+  agy exit 1: 'error: Eligibility check failed: Get "https://www.googleapis.com/oauth2/v2/userinfo": EOF\n'
+batch 17/88: 0/20 in 58s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"b3c5de7c-baa6-4a71-826f-1172c7de288d-1-2008"}\n'
+batch 18/88: 0/20 in 11s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"f1968a7d-348b-4e1d-9de7-f7c92d1f16c2-1-2008"}\n'
+batch 19/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"2f5eaa0f-7a53-4281-a043-f08b5a6575a3-1-2008"}\n'
+batch 20/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"2271234e-30ed-43c2-8a34-fc2fa022aec6-1-2008"}\n'
+batch 21/88: 0/20 in 9s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"6386c086-2002-4cfd-a129-abfe4ee74d38-1-2008"}\n'
+batch 22/88: 0/20 in 9s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"4020a5b7-fb25-46c6-b4e7-f04105921b45-1-2008"}\n'
+batch 23/88: 0/20 in 11s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"52de81dd-0ffc-42f4-abb4-cb821a6d53ef-1-2008"}\n'
+batch 24/88: 0/20 in 13s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"b224da56-98e0-45ac-b4f2-b09b8ddaa337-1-2008"}\n'
+batch 25/88: 0/20 in 9s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"87e5bc99-0a6f-4899-aa83-f5ee8f11aa9c-1-2008"}\n'
+batch 26/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"ad9b4f97-86c9-466a-be98-0d051a433056-1-2008"}\n'
+batch 27/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"820f8de3-cac4-4810-bf2b-bc37d87b7a67-1-2008"}\n'
+batch 28/88: 0/20 in 9s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"1521e543-d816-40c3-8b1d-a0bca0f30709-1-2008"}\n'
+batch 29/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"8553014d-87da-4d4d-acb1-a43460504bab-1-2008"}\n'
+batch 30/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"b5b3a9a6-2659-4f8f-9a64-82c56d294e82-1-2008"}\n'
+batch 31/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"fe05cf32-e673-49fa-bc76-d33f6ce759d8-1-2008"}\n'
+batch 32/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"32b873c2-9eb9-465c-9944-69d61e30fca2-1-2008"}\n'
+batch 33/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"d50b8dfa-a445-4799-9cb6-e14996b8629b-1-2008"}\n'
+batch 34/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"cebef00f-e9ac-4d35-99cf-399ceff73945-2-2008"}\n'
+batch 35/88: 0/20 in 11s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"487c1bd8-199b-4403-86ec-2ebfce8955b8-1-2008"}\n'
+batch 36/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"9df9a8da-57ed-43ad-aced-14e6115739d9-1-2008"}\n'
+batch 37/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"4c9898e9-9bbc-441e-9f87-961df48e1441-1-2008"}\n'
+batch 38/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"a887f131-1601-4278-a3ab-56947148c824-1-2008"}\n'
+batch 39/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"13b1f5ab-37d7-4cd6-a963-1824a37f7e6f-1-2008"}\n'
+batch 40/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"60e163c6-8239-464e-bb21-5d65108d33eb-1-2008"}\n'
+batch 41/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"41484a8a-7b67-4bc9-bfd6-57f199de9dfa-2-2008"}\n'
+batch 42/88: 0/20 in 14s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"1889275b-1c2e-4ab1-8288-57452dd94359-1-2008"}\n'
+batch 43/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"4ea80635-c2c8-458d-aa92-6246b602afb0-1-2008"}\n'
+batch 44/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"25c7863b-fe23-410a-8551-85176dd7087f-1-2008"}\n'
+batch 45/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"cd9dd385-fb70-41fc-937a-cdad87f7f4a1-1-2008"}\n'
+batch 46/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"548949f4-6e90-405e-ab9e-53e9adc8e0cc-1-2008"}\n'
+batch 47/88: 0/20 in 8s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"21094392-4689-4373-88b8-a9d8fdc09782-1-2008"}\n'
+batch 48/88: 0/20 in 7s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"7cac9178-f9bc-425b-a85a-b4b2e64b2ea5-1-2008"}\n'
+batch 49/88: 0/20 in 6s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"f198b70a-b0e3-4c72-b0ed-b560a3702f69-2-2008"}\n'
+batch 50/88: 0/20 in 22s
+  agy exit 3: 'or: Your AI credits balance is too low to continue.\nAGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Resource has been exhausted (e.g. check quota).","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"cf72a700-c577-4c0e-bbcb-07d65de9c602-1-2008"}\n'
+batch 51/88: 0/20 in 7s
