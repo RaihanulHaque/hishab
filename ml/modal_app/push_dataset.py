@@ -4,7 +4,8 @@
 
 Dataset versions: v3 = the 4,409-row Gemini train set (model v3), v4 = the 20,333-row set
 (models v7, v8, v9), v5 = v4 with the Gemini rows relabelled by two labellers plus the
-`test_clean` / `numbers_clean` splits (model v10).
+`test_clean` / `numbers_clean` splits (model v10), v6 = v5 + 1,041 rows with 1 to 9 taka amounts and the
+`small_amounts` split (model v12).
 """
 from __future__ import annotations
 
@@ -62,6 +63,7 @@ SPLIT_DOC = {
     "test_clean": "the `test` rows where two independent labellers agree; their label is the gold. Use this one",
     "numbers": "held out, every amount spelled out in words (\"der hajar\", \"পনেরো হাজার\"); never train on it",
     "numbers_clean": "the `numbers` rows where the two labellers agree",
+    "small_amounts": "held out, every message has a 1 to 9 taka item (\"5 taka rickshaw bhara\"); templates disjoint from train",
 }
 
 HISTORY = {
@@ -73,11 +75,19 @@ HISTORY = {
                                     "276 dropped where the two disagree. The test and numbers splits were relabelled the "
                                     "same way into `test_clean` (476 rows) and `numbers_clean` (317); the original splits "
                                     "are kept for comparison with older models.",
+    "ryuma007/hishab-synthetic-v6": "Successor of `ryuma007/hishab-synthetic-v5`. v5's model read \"5 taka rickshaw bhara\" "
+                                    "as 500: no train row had an amount under 10. v6 adds 1,041 train rows where every "
+                                    "message has a 1 to 9 taka item, from 347 Claude Sonnet templates labelled with the "
+                                    "guideline, amounts filled by a number-word engine (digits, Bangla digits, words), and "
+                                    "a new `small_amounts` split (87 rows) from 87 held-out templates. All v5 splits are "
+                                    "unchanged.",
 }
 
 MODELS = {
     "ryuma007/hishab-synthetic-v4": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v8` and `-v9` (and their `-GGUF` repos)",
-    "ryuma007/hishab-synthetic-v5": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v10` (and its `-GGUF` repo)",
+    "ryuma007/hishab-synthetic-v5": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v10`, `...-pipe-signed-full-v11` and "
+                                    "`...-v11-trim38k` (and their `-GGUF` repos)",
+    "ryuma007/hishab-synthetic-v6": "`ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k` (and its `-GGUF` repo)",
 }
 
 SOURCES = {
@@ -90,6 +100,7 @@ SOURCES = {
     "negatives-v1": "messages with no transaction, labelled []",
     "handwritten-v1": "hand-written",
     "handwritten-v2": "hand-written, targeted fixes",
+    "micro-sonnet": "Claude Sonnet templates with a 1 to 9 taka item, labelled by the guideline; amounts filled by the number-word engine",
 }
 
 
@@ -100,7 +111,7 @@ def push(repo: str, train_split: str = "train") -> str:
     from huggingface_hub import HfApi
 
     splits = {}
-    for name in ("train", "validation", "test", "test_clean", "numbers", "numbers_clean"):
+    for name in ("train", "validation", "test", "test_clean", "numbers", "numbers_clean", "small_amounts"):
         p = Path(DATA_DIR) / "splits" / f"{train_split if name == 'train' else name}.jsonl"
         if not p.exists():
             continue
