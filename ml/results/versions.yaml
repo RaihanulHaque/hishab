@@ -1,0 +1,144 @@
+# Every Hishab model version, one entry each. ml/results/build_tables.py reads this file and the
+# eval JSONs on the Modal volume `hishab-runs` and writes ml/results/RESULTS_TABLES.md.
+# A new version = one new entry here + `python ml/results/build_tables.py`. The story of each
+# version (what we tried, why, the verdict) goes in ml/results/EXPERIMENTS.md.
+#
+# Fields:
+#   label        name used in tables
+#   date         when it was trained (YYYY-MM-DD; empty when not recorded)
+#   run          trained run on the volume (bf16 eval_hf.json, train_log.json, preds_*.jsonl)
+#   gguf_run     run holding the phone files and their eval_gguf/ scores (often <run>__trim38k)
+#   fmt          output format the model writes
+#   train_split  local file in ml/datasets/splits (empty when the split was not saved)
+#   dataset      Hugging Face dataset with that training data
+#   hub          Hugging Face model repo of what was published (bf16; -GGUF next to it)
+#   change       one line: what changed against the previous version
+#   training     optional note shown instead of the logged training facts (trims, pruning)
+#   status       app | best | superseded | experiment | parked
+#   app_quant    the file the app ships (for status app/best)
+
+current_eval: [test_clean_v2, numbers_clean_v2, small_amounts_v2]   # labelling guideline v2
+legacy_eval: [test_clean, numbers_clean, small_amounts, test, numbers]
+quants: [F16, Q6_K, Q4_K_M-imat, Q4_0-imat]
+app: v12-trim38k
+best: v13-trim38k
+
+versions:
+  - label: v3
+    run: qwen3.5-0.8b__json__lora
+    gguf_run: qwen3.5-0.8b__json__lora
+    fmt: json
+    train_split: ""
+    dataset: ryuma007/hishab-synthetic-v3
+    change: clean splits, Modal pipeline, LoRA
+    status: superseded
+  - label: v4
+    run: qwen3.5-0.8b__json__lora__v4
+    gguf_run: qwen3.5-0.8b__json__lora__v4
+    fmt: json
+    train_split: ""
+    change: +5,000 programmatic Banglish rows
+    status: superseded
+  - label: v5
+    run: qwen3.5-0.8b__json__lora__v5
+    gguf_run: qwen3.5-0.8b__json__lora__v5
+    fmt: json
+    train_split: ""
+    change: +42 targeted hand-written rows (shipped in the first app)
+    status: superseded
+  - label: v6
+    run: qwen3.5-0.8b__json__lora__v6
+    gguf_run: qwen3.5-0.8b__json__lora__v6
+    fmt: json
+    train_split: ""
+    change: number-word engine and Codex templates
+    status: superseded
+  - label: v7
+    run: qwen3.5-0.8b__json__lora__v7
+    gguf_run: qwen3.5-0.8b__json__lora__v7
+    fmt: json
+    train_split: train
+    dataset: ryuma007/hishab-synthetic-v4
+    change: stated totals, typing noise, no-transaction rows
+    training: LoRA, 4 of 5 epochs (preempted at step 5,287; resumed run kept the epoch-4 weights), time not recorded
+    status: superseded
+  - label: v8
+    date: 2026-10-17
+    run: qwen3.5-0.8b__json__full__v8
+    gguf_run: qwen3.5-0.8b__json__full__v8
+    fmt: json
+    train_split: train
+    dataset: ryuma007/hishab-synthetic-v4
+    hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v8
+    change: full fine-tune instead of LoRA
+    status: superseded
+  - label: v9
+    date: 2026-10-17
+    run: qwen3.5-0.8b__json__full__v9
+    gguf_run: qwen3.5-0.8b__json__full__v9
+    fmt: json
+    train_split: train
+    dataset: ryuma007/hishab-synthetic-v4
+    hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v9
+    change: tokenizer loaded faithfully from tokenizer.json
+    status: superseded
+  - label: v10
+    date: 2026-10-17
+    run: qwen3.5-0.8b__json__full__v10
+    gguf_run: qwen3.5-0.8b__json__full__v10
+    fmt: json
+    train_split: train_v10
+    dataset: ryuma007/hishab-synthetic-v5
+    hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v10
+    change: Gemini training rows relabelled by two labellers (guideline v1)
+    status: superseded
+  - label: v11
+    date: 2026-10-19
+    run: qwen3.5-0.8b__pipe_signed__full__v11
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v11
+    fmt: pipe_signed
+    train_split: train_v10
+    dataset: ryuma007/hishab-synthetic-v5
+    hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11
+    change: pipe output (description|-800|category), 21 tokens per answer instead of 45
+    status: superseded
+  - label: v11-trim38k
+    date: 2026-10-19
+    run: qwen3.5-0.8b__pipe_signed__full__v11
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v11__trim38k
+    fmt: pipe_signed
+    train_split: train_v10
+    dataset: ryuma007/hishab-synthetic-v5
+    hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11-trim38k
+    change: vocabulary trimmed 248k to 38k tokens (343 MB, ~45% faster), no retraining
+    training: no training; v11's weights with the vocabulary sliced
+    status: superseded
+  - label: v11-trim38k-L20
+    date: 2026-10-20
+    run: qwen3.5-0.8b__pipe_signed__full__v11__trim38k__L20
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v11__trim38k__L20
+    fmt: pipe_signed
+    train_split: train_v10
+    change: 4 of 24 layers removed and healed (288 MB, ~24% faster, numbers_clean -2)
+    training: healed 2 epochs from v11-trim38k (KL to it + 0.2 CE), lr 2e-5, 34 min
+    status: experiment
+  - label: v12-trim38k
+    date: 2026-10-21
+    run: qwen3.5-0.8b__pipe_signed__full__v12
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v12__trim38k
+    fmt: pipe_signed
+    train_split: train_v12
+    dataset: ryuma007/hishab-synthetic-v6
+    hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k
+    change: +1,041 rows with 1 to 9 taka amounts
+    status: app
+    app_quant: Q4_K_M-imat
+  - label: v13-trim38k
+    date: 2026-10-21
+    run: qwen3.5-0.8b__pipe_signed__full__v13
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k
+    fmt: pipe_signed
+    train_split: train_v13
+    change: template and lexicon rows relabelled; labelling guideline v2
+    status: best
+    app_quant: Q4_K_M-imat

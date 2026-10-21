@@ -91,24 +91,31 @@ older sets stay for comparison with older models.
   (build the prompt from `hishab.prompts.system_prompt('pipe_signed')` + Qwen chat markup with an
   empty `<think>` block). Probe the target case and its contrasts ("5 taka" and "5 hajar").
 
-## 6. EXPERIMENTS.md - every table, every time
+## 6. Results docs: registry + generated tables + story
 
-This is the step that keeps getting half-done. A version is written up only when **every table
-that has a row for the previous version also has one for the new version**, top and bottom.
+The numbers are generated; only the story is written by hand. Nothing can be half-updated as long
+as the version is in the registry.
 
-1. Generate the rows:
+1. **Register the version** in `ml/results/versions.yaml` (label, date, run, gguf_run, fmt,
+   train_split, dataset, hub, one-line change, status). When it replaces the app model or becomes
+   the best, update `app:` / `best:` at the top and the old entry's `status`.
+2. **Refresh and render:**
    ```bash
-   python ml/results/experiment_rows.py --label vN --run qwen3.5-0.8b__pipe_signed__full__vN \
-       --gguf-run qwen3.5-0.8b__pipe_signed__full__vN__trim38k --train-split train_vN
+   modal run ml/modal_app/collect_results.py      # reads every registered run's evals -> results_cache.json
+   python ml/results/build_tables.py              # writes RESULTS_TABLES.md
    ```
-2. Walk `references/experiments-checklist.md` table by table and insert each row next to the
-   previous version's row (same column order; blank cells for evals not run, never guesses).
-3. Write the per-version section (problem, data, training, before/after per split, error
-   breakdown, probes, verdict) and update "Where things stand", the timeline and "Open problems".
-4. Verify: `grep -n "^| v<prev>" ml/results/EXPERIMENTS.md` and `grep -n "^| vN"` - every table
-   in the first list must appear in the second.
+   Check the new version appears in the status, leaderboard, per-quant, per-language, errors and
+   training tables. A blank cell means an eval wasn't run: go back to step 4, don't type a number.
+3. **Write the story** in `ml/results/EXPERIMENTS.md` under "Per version": problem, data, training,
+   the before/after on the current eval sets (copied from RESULTS_TABLES.md), the targeted error
+   class, probes, verdict. Update "Where things stand" and "Open problems". Hand measurements (phone
+   speed, probes) go under "Hand measurements", since they are not in the eval files.
+4. **New eval set?** Add it to `current_eval` or `legacy_eval` in `versions.yaml` and a one-line
+   description to `SET_DOC` in `build_tables.py`; re-score the older versions on it (bf16:
+   `train.py --eval-only <runs>`; GGUF: `gguf.py --runs <runs> --quants F16,Q6_K,Q4_K_M-imat,Q4_0-imat --split <set>`)
+   so the leaderboard compares like with like.
 
-Experiments that are not shipped (pruning, MTP, ...) get the same treatment.
+Experiments that are not shipped (pruning, MTP, ...) are registered too, with `status: experiment`.
 
 ## 7. Publish
 
