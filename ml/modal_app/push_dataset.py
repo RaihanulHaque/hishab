@@ -5,7 +5,8 @@
 Dataset versions: v3 = the 4,409-row Gemini train set (model v3), v4 = the 20,333-row set
 (models v7, v8, v9), v5 = v4 with the Gemini rows relabelled by two labellers plus the
 `test_clean` / `numbers_clean` splits (model v10), v6 = v5 + 1,041 rows with 1 to 9 taka amounts and the
-`small_amounts` split (model v12).
+`small_amounts` split (model v12), v7 = template, number-word and lexicon rows relabelled and labelling
+guideline v2, with `*_v2` eval splits (model v13).
 """
 from __future__ import annotations
 
@@ -48,7 +49,9 @@ https://github.com/RaihanulHaque/hishab/blob/main/docs/LABELLING_GUIDELINE.md
 Columns: `id`, `language`, `complexity`, `source`, `instruction`, `translation` (English),
 `transactions` (JSON string: list of `{{description, amount, category, type}}`), `label_source`
 (`original`: the row's own label; `gold`: two independent labellers confirmed the original;
-`gemini-3.8-flash`: both labellers agreed on a different label, which replaced it).
+`gemini-3.8-flash`: both labellers agreed on a different label, which replaced it; `sonnet+second`: a
+template row whose category/type Sonnet and Codex or Opus agreed on under guideline v1; `opus+sonnet-g2`: a label
+Opus and Sonnet agreed on under guideline v2).
 
 Categories: food, grocery, rent, utilities, mobile_recharge, transport, tuition, salary, gift,
 loan, shopping, medical, entertainment, other. Type: income | expense. Amounts in BDT.
@@ -64,6 +67,9 @@ SPLIT_DOC = {
     "numbers": "held out, every amount spelled out in words (\"der hajar\", \"পনেরো হাজার\"); never train on it",
     "numbers_clean": "the `numbers` rows where the two labellers agree",
     "small_amounts": "held out, every message has a 1 to 9 taka item (\"5 taka rickshaw bhara\"); templates disjoint from train",
+    "test_clean_v2": "the `test` rows where Opus and Sonnet agree under labelling guideline v2; the headline from v13 on",
+    "numbers_clean_v2": "the `numbers` rows where Opus and Sonnet agree under guideline v2",
+    "small_amounts_v2": "the `small_amounts` rows where Opus and Sonnet agree under guideline v2",
 }
 
 HISTORY = {
@@ -81,6 +87,15 @@ HISTORY = {
                                     "guideline, amounts filled by a number-word engine (digits, Bangla digits, words), and "
                                     "a new `small_amounts` split (87 rows) from 87 held-out templates. All v5 splits are "
                                     "unchanged.",
+    "ryuma007/hishab-synthetic-v7": "Successor of `ryuma007/hishab-synthetic-v6`, labelled under labelling guideline v2 "
+                                    "(money to or from family follows its stated purpose, wages paid are salary expense, "
+                                    "a driver's daily vehicle payment is transport, business sales are salary and one-off "
+                                    "sales other). The Codex-template and number-word train rows were relabelled from "
+                                    "scratch by two labellers (Sonnet + Codex/Opus; 1,276 fixed, 1,300 ambiguous rows "
+                                    "dropped), then every train row by Opus under guideline v2, a change kept only where "
+                                    "Sonnet agreed (1,252). The validation split is relabelled under v2; new `*_v2` eval "
+                                    "splits keep the rows where Opus and Sonnet agree. The older eval splits are kept for "
+                                    "comparison.",
 }
 
 MODELS = {
@@ -88,6 +103,7 @@ MODELS = {
     "ryuma007/hishab-synthetic-v5": "`ryuma007/hishab-qwen3.5-0.8b-json-full-v10`, `...-pipe-signed-full-v11` and "
                                     "`...-v11-trim38k` (and their `-GGUF` repos)",
     "ryuma007/hishab-synthetic-v6": "`ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k` (and its `-GGUF` repo)",
+    "ryuma007/hishab-synthetic-v7": "`ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k` (and its `-GGUF` repo)",
 }
 
 SOURCES = {
@@ -106,13 +122,15 @@ SOURCES = {
 
 
 @app.function(image=train_image, volumes=VOLUMES, secrets=[hf_secret], timeout=1800)
-def push(repo: str, train_split: str = "train") -> str:
+def push(repo: str, train_split: str = "train", val_split: str = "validation") -> str:
     from datasets import Dataset, DatasetDict
     from huggingface_hub import HfApi
 
     splits = {}
-    for name in ("train", "validation", "test", "test_clean", "numbers", "numbers_clean", "small_amounts"):
-        p = Path(DATA_DIR) / "splits" / f"{train_split if name == 'train' else name}.jsonl"
+    for name in ("train", "validation", "test", "test_clean", "numbers", "numbers_clean", "small_amounts",
+                 "test_clean_v2", "numbers_clean_v2", "small_amounts_v2"):
+        src = train_split if name == "train" else val_split if name == "validation" else name
+        p = Path(DATA_DIR) / "splits" / f"{src}.jsonl"
         if not p.exists():
             continue
         rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
@@ -135,5 +153,5 @@ def push(repo: str, train_split: str = "train") -> str:
 
 
 @app.local_entrypoint()
-def main(repo: str = "ryuma007/hishab-synthetic-v5", train_split: str = "train_v10"):
-    print(push.remote(repo, train_split))
+def main(repo: str = "ryuma007/hishab-synthetic-v5", train_split: str = "train_v10", val_split: str = "validation"):
+    print(push.remote(repo, train_split, val_split))

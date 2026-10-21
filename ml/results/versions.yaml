@@ -22,7 +22,7 @@
 current_eval: [test_clean_v2, numbers_clean_v2, small_amounts_v2]   # labelling guideline v2
 legacy_eval: [test_clean, numbers_clean, small_amounts, test, numbers]
 quants: [F16, Q6_K, Q4_K_M-imat, Q4_0-imat]
-app: v12-trim38k
+app: v13-trim38k
 best: v13-trim38k
 
 versions:
@@ -168,7 +168,7 @@ versions:
     dataset: ryuma007/hishab-synthetic-v6
     hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k
     change: +1,041 rows with 1 to 9 taka amounts
-    status: app
+    status: superseded
     app_quant: Q4_K_M-imat
     measurements:
       probes: {Q6_K: 18/20, Q4_K_M-imat: 18/20}
@@ -180,8 +180,10 @@ versions:
     gguf_run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k
     fmt: pipe_signed
     train_split: train_v13
+    dataset: ryuma007/hishab-synthetic-v7
+    hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k
     change: template and lexicon rows relabelled; labelling guideline v2
-    status: best
+    status: app
     measurements:
       probes: {Q6_K: 15/20, Q4_K_M-imat: 16/20}
       notes: borderline probes flip between runs ("oushudh", "১৫ হাজার ৫০০" missed as in v11-trim38k); detail in EXPERIMENTS.md

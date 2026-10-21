@@ -8,7 +8,7 @@ Scores are **exact match**: the message's set of (amount, category, type) equals
 
 |  | model | test_clean_v2 | numbers_clean_v2 | small_amounts_v2 | what it added |
 |---|---|---|---|---|---|
-| in the app | v12-trim38k (Q4_K_M-imat, 343 MB) | 89.8 | 74.2 | 82.9 | +1,041 rows with 1 to 9 taka amounts |
+| in the app | v13-trim38k (Q4_K_M-imat, 343 MB) | 94.2 | 89.2 | 85.5 | template and lexicon rows relabelled; labelling guideline v2 |
 | best | v13-trim38k (Q4_K_M-imat, 343 MB) | 94.2 | 89.2 | 85.5 | template and lexicon rows relabelled; labelling guideline v2 |
 
 ## Leaderboard on the current eval sets (labelling guideline v2)
@@ -22,8 +22,8 @@ Scores are **exact match**: the message's set of (amount, category, type) equals
 | v10 | superseded | 89.4 | 89.8 | 74.5 | 75.2 | 52.6 | 51.3 |
 | v11 | superseded | 89.6 | 89.6 | 75.8 | 76.1 | 22.4 | 23.7 |
 | v11-trim38k | superseded | 89.6 | 89.6 | 75.8 | 75.8 | 22.4 | 26.3 |
-| v12-trim38k | app | 90.7 | 89.8 | 74.2 | 74.2 | 82.9 | 82.9 |
-| v13-trim38k | best | **94.4** | **94.2** | **89.5** | **89.2** | **88.2** | **85.5** |
+| v12-trim38k | superseded | 90.7 | 89.8 | 74.2 | 74.2 | 82.9 | 82.9 |
+| v13-trim38k | app | **94.4** | **94.2** | **89.5** | **89.2** | **88.2** | **85.5** |
 
 ## Per quant, current eval sets
 
@@ -212,7 +212,7 @@ From the local split files (versions whose split was not saved are left out).
 | v7 | train | 20,333 | 9,337 | 5,111 | 1,820 | 4,065 | 350 | 8,445 | 8,861 | 1,995 | 682 | ryuma007/hishab-synthetic-v4 |
 | v10 | train_v10 | 20,057 | 9,161 | 5,063 | 1,802 | 4,031 | 458 | 8,373 | 8,618 | 1,932 | 676 | ryuma007/hishab-synthetic-v5 |
 | v12-trim38k | train_v12 | 21,098 | 9,653 | 5,288 | 1,967 | 4,190 | 458 | 8,778 | 9,224 | 1,962 | 676 | ryuma007/hishab-synthetic-v6 |
-| v13-trim38k | train_v13 | 19,798 | 8,930 | 5,136 | 1,866 | 3,866 | 458 | 8,388 | 8,494 | 1,849 | 609 |  |
+| v13-trim38k | train_v13 | 19,798 | 8,930 | 5,136 | 1,866 | 3,866 | 458 | 8,388 | 8,494 | 1,849 | 609 | ryuma007/hishab-synthetic-v7 |
 
 | source | v7 | v10 | v12-trim38k | v13-trim38k |
 |---|---|---|---|---|

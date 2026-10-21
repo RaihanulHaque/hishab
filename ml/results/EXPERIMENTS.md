@@ -14,10 +14,10 @@ generated tables, so this file never has to be kept in sync by hand.
 
 ## Where things stand (2026-10-21)
 
-- **In the app:** v12-trim38k Q4_K_M-imat (343 MB, app 1.2.0). **Best:** v13-trim38k, not yet published or in the app. Current scores: `RESULTS_TABLES.md`, "Current status".
+- **In the app:** v13-trim38k Q4_K_M-imat (343 MB, app 1.3.0), the best model, published with dataset `ryuma007/hishab-synthetic-v7`. Current scores: `RESULTS_TABLES.md`, "Current status".
 - **Output format:** `pipe_signed` since v11 (`description|-800|category`, about half the tokens of JSON); vocabulary trimmed to 38k tokens since v11-trim38k (343 MB, ~45% faster on the phone).
 - **Eval sets:** from v13 the headline sets are `test_clean_v2`, `numbers_clean_v2`, `small_amounts_v2`, labelled under guideline v2. The older sets stay in the legacy appendix; newer models can score lower there by following the new rules.
-- **Next:** publish v13 and switch the app; then real user corrections (opt-in export of review-sheet edits) rather than more synthetic rounds.
+- **Next:** real user corrections (opt-in export of review-sheet edits) rather than more synthetic rounds.
 
 ## How to read the numbers
 
@@ -305,4 +305,5 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Result, Q4_K_M-imat (v12-trim38k in brackets):** test_clean_v2 **94.2** (89.6), numbers_clean_v2 **89.2** (74.5), small_amounts_v2 **85.5** (82.9); on the old clean sets test_clean **94.3** (91.8), numbers_clean **90.2** (78.2), small_amounts **86.2** (81.6); test 79.0 (79.2); numbers 74.8 (84.3). bf16: test_clean 94.3, numbers_clean 90.9, small_amounts 88.5, test_clean_v2 94.4, numbers_clean_v2 89.5, small_amounts_v2 88.2. All 90 small amounts still read right. Wrong messages on test_clean (bf16): 27 (v12: 36), count 10, category 13; numbers_clean 29 (v12: 69).
 - **The `numbers` drop is the relabel, checked:** of the 52 `numbers` messages v12 got right and v13 gets wrong, 29 are exactly the label both v2 labellers agreed on (the old template gold is what changed), 14 are rows the v2 labellers disagree on, 9 are real regressions. On `test` the same split is 9 / 4 / 4. The original-label sets now measure agreement with the old conventions.
 - **Probes (20 spoken amounts, Mac kiln-cli):** Q4_K_M-imat 16/20, Q6_K 15/20 (v12: 18/20 both). The two extra misses ("sat sho taka oushudh" as food, "১৫ হাজার ৫০০" as 15000) are borderline probes v11-trim38k also missed; on the 306-row numbers_clean_v2 v13 is 15 points ahead. Detail under Hand measurements.
-- **Verdict:** clear win on every clean set, biggest where the labels were wrong (numbers_clean +12). Not published or in the app yet.
+- **Verdict:** clear win on every clean set, biggest where the labels were wrong (numbers_clean +12).
+- **Published 2026-10-21:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k` (bf16) and `...-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat; Q4_K_M-imat sha256 on the Hub matches the probed file), trained on `ryuma007/hishab-synthetic-v7` (train 19,798, validation under v2, the old eval splits and the three `*_v2` splits). The app (1.3.0) downloads the Q4_K_M-imat.
