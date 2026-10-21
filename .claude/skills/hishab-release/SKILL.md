@@ -70,12 +70,15 @@ Done when it prints `kept: 38000` and no "tokenize differently" error. Details: 
 One split per invocation; the first call builds F16, imatrix and the quants:
 
 ```bash
-for s in test_clean numbers_clean test numbers <new split>; do
-  modal run ml/modal_app/gguf.py --runs qwen3.5-0.8b__pipe_signed__full__vN__trim38k --quants Q4_K_M-imat --split $s
+for s in test_clean_v2 numbers_clean_v2 small_amounts_v2 test_clean numbers_clean small_amounts test numbers; do
+  modal run ml/modal_app/gguf.py --runs qwen3.5-0.8b__pipe_signed__full__vN__trim38k \
+      --quants F16,Q6_K,Q4_K_M-imat,Q4_0-imat --split $s
 done
 ```
 
-Add `F16,Q6_K,Q4_0-imat` to `--quants` when the version changes the model itself (not just data).
+Always build and score all four (the user expects Q6_K in every version's tables; the app ships
+Q4_K_M-imat). The `_v2` sets follow labelling guideline v2 and are the headline from v13 on; the
+older sets stay for comparison with older models.
 
 ## 5. Compare and probe
 

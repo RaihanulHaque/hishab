@@ -69,7 +69,7 @@ Numbers language mix: Banglish 149, Bangla 89, mixed 74, English 45.
 | v11-trim38k | 92.4 (F16) | 92.4 | 92.0 | 79.2 (F16) | 78.9 | 78.9 |
 | v11-trim38k-L20 | 92.4 | | 91.8 | 77.3 | | 76.3 |
 | v12-trim38k | 92.4 (bf16, untrimmed) | | 91.8 | 78.2 (bf16, untrimmed) | | 78.2 |
-| v13-trim38k | 94.3 (bf16, untrimmed) | | **94.3** | 90.9 (bf16, untrimmed) | | **90.2** |
+| v13-trim38k | 94.3 (bf16, untrimmed) | 93.7 | **94.3** | 90.9 (bf16, untrimmed) | 90.9 | **90.2** |
 
 ### On the original labels
 
@@ -464,7 +464,12 @@ rows where they disagree are dropped (`ml/data/build_v13.py`).
 |---|---|---|---|---|
 | v12-trim38k | Q4_K_M-imat GGUF | 89.6 | 74.5 | 82.9 |
 | v13 | bf16 on HF | 94.4 | 89.5 | 88.2 |
-| v13-trim38k | Q4_K_M-imat GGUF | **94.2** | **89.2** | **85.5** |
+| v13-trim38k | F16 GGUF | 94.4 | 89.5 | 89.5 |
+| v13-trim38k | Q6_K GGUF | 94.4 | 88.9 | **90.8** |
+| v13-trim38k | Q4_K_M-imat GGUF (app) | 94.2 | 89.2 | 85.5 |
+| v13-trim38k | Q4_0-imat GGUF | **95.0** | **89.9** | 84.2 |
+
+Every v13 quant is within a few messages of bf16; small_amounts_v2 has only 76 rows, so its 4-bit dip (85.5 / 84.2 vs 89.5 F16) is 3 to 5 messages.
 
 v13 bf16 per field, test_clean_v2: count 97.5, amount 97.5, category 98.5, type 99.6; wrong 27 (count 12, type 3, category 12).
 numbers_clean_v2: count 99.7, amount 99.0, category 93.7, type 98.5; wrong 32 (count 1, amount 2, type 7, category 22; salary to other 3).
@@ -496,7 +501,7 @@ Test set, exact:
 | v11-trim38k on `test_clean` | 92.4 | | 92.4 | | 92.0 | | 92.9 | | | |
 | v11-trim38k-L20 on `test_clean` | | | | | 91.8 | | | | | |
 | v12-trim38k on `test_clean` | | | | | 91.8 | | | | | |
-| v13-trim38k on `test_clean` | | | | | **94.3** | | | | | |
+| v13-trim38k on `test_clean` | 94.5 | | 93.7 | | **94.3** | | 95.0 | | | |
 
 Numbers set, exact:
 
@@ -516,7 +521,7 @@ Numbers set, exact:
 | v11-trim38k on `numbers_clean` | | 79.2 | | 78.9 | | 78.9 |
 | v11-trim38k-L20 on `numbers_clean` | 77.3 (HF) | | | | | 76.3 |
 | v12 / v12-trim38k on `numbers_clean` | 78.2 (HF) | | | | | 78.2 |
-| v13 / v13-trim38k on `numbers_clean` | 90.9 (HF) | | | | | **90.2** |
+| v13 / v13-trim38k on `numbers_clean` | 90.9 (HF) | 91.2 | | 90.9 | | **90.2** |
 
 v10 on `numbers_clean`, the rest of the ladder: Q4_K_M 78.9, Q4_0 78.2, Q4_0-imat 77.9,
 IQ4_XS-imat 77.9, Q3_K_M-imat 77.3, IQ3_M-imat 79.5. Every quant down to IQ3_M stays within a
