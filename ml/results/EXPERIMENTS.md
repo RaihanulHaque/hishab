@@ -8,7 +8,7 @@ Last updated 2026-10-19.
 
 ## Where things stand
 
-- **In the app today:** v11-trim38k Q4_K_M-imat (343 MB).
+- **In the app today:** v12-trim38k Q4_K_M-imat (343 MB, app 1.2.0), published as `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k[-GGUF]`.
 - **Best model:** v10. Ship **v10 Q4_K_M-imat** (529 MB): test_clean 93.1, numbers_clean 79.2, numbers 85.4, probes 18/20, the same as Q6_K at 100 MB less, and 34 tok/s on the Pixel 8 against Q6_K's 27. Q4_0-imat is about 6% faster still but 1.3 points lower on numbers_clean. The 3-bit files are not faster (see "Speed on the Pixel 8").
 - **Biggest fix along the way:** v9 found that transformers 5 tokenized Bengali differently from the phone. Since v9 the phone file scores the same as the full-precision model.
 - **Shorter output (v11):** the same model and data trained to write `description|-800|category` lines instead of JSON. It ties v10 (test_clean 92.4 bf16, 92.2 at Q4_K_M-imat) with 21 output tokens per message instead of 45, so about 0.6 s instead of 1.3 s on the Pixel 8. The app needs a pipe parser before it can use it.
@@ -206,6 +206,8 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Before:** v11-trim38k Q4_K_M-imat scored **23.0** on small_amounts; 58 of its 90 small amounts were multiplied by 10, 100 or 1000 ("3 tk back" became +3000, "6 tk" became 60), 31 read right.
 - **Training:** v11 recipe (pipe_signed, full fine-tune, lr 3e-5, 3 epochs, best epoch 2), then the vocabulary trim to 38k (6,037 tokens used by the data, all kept; every text tokenizes as before).
 - **Result (Q4_K_M-imat, v11-trim38k in brackets):** small_amounts **81.6** (23.0), test_clean 91.8 (92.0), numbers_clean 78.2 (78.9), test 79.2 (80.3), numbers 84.3 (85.2). bf16: small_amounts 80.5, test_clean 92.4, numbers_clean 78.2, test 79.5, numbers 84.3. **All 90 small amounts read right.** The 16 small_amounts misses are categories (11), types (4) and one count: a lozenge as `medical` (gold `food`), a sold saree as `other` (gold `salary`), a gum as `shopping`. The other sets move by one to five messages, within run-to-run churn.
+- **In the app on the Pixel 8 (2026-10-21):** "5 taka rickshaw bhara" −৳5, "photocopy 3 tk, rickshaw 30", "cha 8 tk ar singara 5 tk", "5 hajar taka basha vara dilam" −৳5,000 and "salary 45k pelam, electricity bill 1250.50" all right. Speed was 13 to 19 tok/s because the phone was charging and throttled (thermal status 1, CPU at 70 °C); the file has the same size and layers as v11-trim38k (51 tok/s cool).
+- **Published 2026-10-21:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v12-trim38k` (bf16) and `...-GGUF` (Q4_K_M-imat; Hub sha256 matches the tested file). The training split `train_v12.jsonl` and `small_amounts.jsonl` are in the repo, not yet on the Hub (the model cards link `hishab-synthetic-v5`).
 - **Probes (Mac kiln-cli, Q4_K_M-imat, v11 → v12):** "5 taka rickshaw bhara" −500 → **−5**; "ভিক্ষুককে ২ টাকা দিলাম" −2000 → **−2**; "5 hajar taka basha vara" −5000 both; "5 sho taka diye juta" −500 both; "cha 8 tk ar singara 5 tk" right in both.
 
 ### v11-trim38k-L20: depth pruning, tried (2026-10-20)
