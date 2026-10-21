@@ -13,6 +13,10 @@ Blind coordinate taps are therefore not allowed.
   exactly the typed text before sending, prints the review sheet's items, and closes it with Back
   (never "Save all"). Any unexpected screen aborts with a screenshot and touches nothing.
 - If the phone is not on Home, ask the user to put it there rather than navigating yourself.
+- The keyboard must be on an English layout. `adb input text` goes through the active keyboard, and
+  Gboard on a Bangla layout transliterates it ("5 taka rickshaw bhara" became "5   ভাড়া"); the script's
+  composer check catches this and aborts. Ask the user to switch Gboard to English (globe key) rather
+  than changing their keyboard settings yourself.
 - If the user may be using the phone (unexpected text in the composer, a different screen), stop.
 - Model files for benchmarks go in `/data/local/tmp/kiln/`; delete what you pushed when done.
 
