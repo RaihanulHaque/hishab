@@ -8,6 +8,10 @@ human (or a judge prompt) decides.
   python ml/data/relabel.py --splits test numbers --labeller agy --model gemini-3.8-flash-high \
       --out ml/results/relabel/gemini.jsonl
 
+  # Claude Sonnet through Claude Code print mode:
+  python ml/data/relabel.py --splits train_v12 --sources codex-template-v2 --labeller claude --model sonnet \
+      --tag sonnet --out ml/results/relabel/sonnet_templates.jsonl
+
   # Write the batch prompts to files so another model (e.g. a Claude Code subagent) can answer them:
   python ml/data/relabel.py --splits test numbers --emit-batches ml/results/relabel/batches
 
@@ -116,6 +120,38 @@ def run_agy(prompt: str, model: str, timeout: int) -> str:
     return r.stdout
 
 
+def run_claude(prompt: str, model: str, timeout: int) -> str:
+    """Claude Code in print mode, no tools, a plain labeller system prompt (the default agent prompt
+    treats data-labelling requests as suspicious instructions)."""
+    cmd = ["claude", "-p", "--output-format", "text", "--tools", "", "--model", model, "--system-prompt",
+           "You label a Bangladeshi personal-finance dataset. Reply with JSON only."]
+    try:
+        r = subprocess.run(cmd + [prompt], capture_output=True, text=True, timeout=timeout, cwd="/tmp")
+    except subprocess.TimeoutExpired:
+        print(f"  claude timed out after {timeout}s", flush=True)
+        return ""
+    if r.returncode != 0:
+        print(f"  claude exit {r.returncode}: {r.stderr[-300:]!r}", flush=True)
+    return r.stdout
+
+
+def run_codex(prompt: str, model: str, timeout: int) -> str:
+    """Codex (OpenAI) at low reasoning effort, read-only, no repo; the reply is the JSON array."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        out = Path(d) / "out.txt"
+        cmd = ["codex", "exec", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-o", str(out),
+               "-c", "model_reasoning_effort=low"]
+        if model and model != "default":
+            cmd += ["-m", model]
+        try:
+            subprocess.run(cmd + [prompt], capture_output=True, text=True, timeout=timeout, cwd=d)
+        except subprocess.TimeoutExpired:
+            print(f"  codex timed out after {timeout}s", flush=True)
+            return ""
+        return out.read_text() if out.exists() else ""
+
+
 def already(out: Path) -> set[str]:
     if not out.exists():
         return set()
@@ -126,7 +162,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--splits", nargs="+", default=["test", "numbers"])
     ap.add_argument("--sources", nargs="*", default=None, help="only rows whose `source` is in this list (e.g. base hard)")
-    ap.add_argument("--labeller", choices=["agy"], default="agy")
+    ap.add_argument("--labeller", choices=["agy", "claude", "codex"], default="agy")
     ap.add_argument("--model", default="gemini-3.8-flash-high")
     ap.add_argument("--batch", type=int, default=20)
     ap.add_argument("--timeout", type=int, default=300)
@@ -180,7 +216,8 @@ def main() -> None:
         for i in range(0, len(todo), args.batch):
             batch = todo[i:i + args.batch]
             t0 = time.time()
-            answers = parse_answer(run_agy(prompt_for(batch), args.model, args.timeout))
+            runner = {"claude": run_claude, "codex": run_codex}.get(args.labeller, run_agy)
+            answers = parse_answer(runner(prompt_for(batch), args.model, args.timeout))
             got = 0
             for r in batch:
                 if r["id"] in answers:

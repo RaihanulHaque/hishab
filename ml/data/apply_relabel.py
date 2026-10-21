@@ -7,8 +7,17 @@ For every train row whose `source` is one of --sources (the Gemini-written rows:
   * both labellers agree            -> use their label (keeps the old descriptions when the tuple set is unchanged)
   * labellers disagree              -> drop the row (its convention is ambiguous; keeping either side teaches noise)
   * a labeller has no answer yet    -> drop the row and count it
-Every other source (Codex templates, programmatic lexicon, hand-written, number-word augmentation,
-negatives) already follows docs/LABELLING_GUIDELINE.md and is kept as is.
+Every other source is kept as is.
+
+v13 relabels the Codex-template and number-word rows, whose amounts are exact by construction
+(numwords), with --amount-locked: an agreed label is only taken when its amounts equal the row's
+amounts, and then only the categories and types change (the row's descriptions stay). Agreed labels
+with different amounts are a count/total judgement on a template and the row is dropped.
+
+  python ml/data/apply_relabel.py --train ml/datasets/splits/train_v12.jsonl \
+      --sources codex-template-v2 codex-template-v2-bangla-words numwords-aug-v1 --amount-locked \
+      --labels ml/results/relabel/gemini_tpl.jsonl ml/results/relabel/sonnet_tpl.jsonl \
+      --out ml/datasets/splits/train_v13.jsonl
 """
 from __future__ import annotations
 
@@ -31,6 +40,7 @@ def main() -> None:
     ap.add_argument("--sources", nargs="+", default=["base", "hard"])
     ap.add_argument("--train", type=Path, default=SPLITS / "train.jsonl")
     ap.add_argument("--out", type=Path, default=SPLITS / "train_v10.jsonl")
+    ap.add_argument("--amount-locked", action="store_true", help="amounts are exact by construction: only change categories/types")
     args = ap.parse_args()
 
     labels: dict[str, dict[str, list]] = {}
@@ -60,9 +70,24 @@ def main() -> None:
         if len(keys) != 1:
             stat["dropped_disagree"] += 1
             continue
-        if keys.pop() == key(r["transactions"]):
+        agreed = keys.pop()
+        if agreed == key(r["transactions"]):
             stat["kept_unchanged"] += 1
             out.append({**r, "label_source": "gold"})
+        elif args.amount_locked:
+            amounts = sorted(round(float(t["amount"]), 2) for t in r["transactions"])
+            if sorted(a for a, _, _ in agreed) != amounts:
+                stat["dropped_amounts_differ"] += 1
+                continue
+            # move the agreed category/type onto the row's own transactions, matched by amount
+            pool = [dict(t) for t in got[0]]
+            new = []
+            for t in r["transactions"]:
+                j = next(i for i, g in enumerate(pool) if round(float(g["amount"]), 2) == round(float(t["amount"]), 2))
+                g = pool.pop(j)
+                new.append({**t, "category": g["category"], "type": g["type"]})
+            stat["relabelled"] += 1
+            out.append({**r, "transactions": new, "label_source": "+".join(names)})
         else:
             stat["relabelled"] += 1
             out.append({**r, "transactions": got[0], "label_source": names[0]})
