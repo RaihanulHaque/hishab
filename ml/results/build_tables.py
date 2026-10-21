@@ -163,6 +163,21 @@ def main() -> None:
         if rows:
             out += [f"### {s}", "", table(["version", "path", "wrong", "count", "amount", "type", "category", "top swaps"], rows), ""]
 
+    # 5b. hand measurements (versions.yaml `measurements`)
+    out += ["## Phone measurements (hand-recorded in versions.yaml)", "",
+            "Not from the eval pipeline: Pixel 8 speed (kiln) and the 20 spoken-amount probes "
+            "(`ml/datasets/probes_numbers.jsonl` through kiln-cli on the Mac, `ml/scripts/probe_gguf.py`). "
+            "Per-probe detail is in EXPERIMENTS.md.", ""]
+    rows = []
+    for v in d.versions:
+        m = v.get("measurements") or {}
+        if not m:
+            continue
+        tok = ", ".join(f"{q} {x}" for q, x in (m.get("pixel_tok_s") or {}).items()) or m.get("pixel_speedup", "")
+        probes = ", ".join(f"{q} {x}" for q, x in (m.get("probes") or {}).items())
+        rows.append([v["label"], tok, m.get("pixel_how", ""), probes, m.get("notes", "")])
+    out += [table(["version", "Pixel 8 generation (tok/s)", "how", "probes", "notes"], rows), ""]
+
     # 6. training
     out += ["## Training", "", "Best epoch is the lowest validation loss; v11 on, losses are per token of the shorter pipe answer.", ""]
     rows = []

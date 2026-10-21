@@ -7,7 +7,7 @@ generated tables, so this file never has to be kept in sync by hand.
 |---|---|---|
 | `RESULTS_TABLES.md` | every score table (status, leaderboard, per quant, per language, errors, training, data, legacy) | generated: `modal run ml/modal_app/collect_results.py` then `python ml/results/build_tables.py` |
 | `versions.yaml` | one entry per model version (runs, data, published repos, what changed, status) | one new entry per version |
-| `EXPERIMENTS.md` (this file) | the narrative per version, hand measurements (phone speed, probes), open problems | hand-written |
+| `EXPERIMENTS.md` (this file) | the story per version (oldest to newest, the newest always at the bottom), detailed hand-measurement logs, open problems | hand-written; a new version is appended at the end |
 | `VOCAB_TRIM.md`, `RELABEL.md` | how the vocabulary trim and the two-labeller relabel work | hand-written |
 | `docs/LABELLING_GUIDELINE.md` | the labelling rules (v2 from 2026-10-21) | owner's decisions |
 | `archive/EXPERIMENTS_until_2026-10-21.md` | the previous all-in-one version of this file, tables included | frozen |
@@ -25,6 +25,136 @@ generated tables, so this file never has to be kept in sync by hand.
 - **bf16** is the full-precision model on Modal (HF transformers, greedy); **GGUF** is llama.cpp at kiln's commit, the phone path. The app ships Q4_K_M-imat.
 - **clean sets** keep only the held-out rows where two independent frontier labellers, labelling from scratch with the guideline, agree; their label is the gold (`RELABEL.md`). A message is about 0.2 points on the 480-row sets, and two training runs of the same recipe differ by about ±1 point.
 
+## Open problems
+
+1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2) and for the template, number-word and lexicon rows in v13 (numbers_clean 90.2). Was open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
+2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
+3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
+4. ~~**Amounts under 10 taka.**~~ **Fixed in v12** (small_amounts 23.0 to 81.6, every small amount read right). Was: "5 taka rickshaw bhara" came out as `-500` (v11-trim38k and L20 alike). No training row has an amount under 10, and a lone "5" in training almost always means "5 hajar" or "5 sho"; the eval sets cannot see it (smallest amounts: test_clean 15, numbers_clean 10). v12 needs a few hundred 1 to 9 taka rows ("2 tk cha", "৫ টাকা") and some in the eval sets.
+5. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
+
+## Hand measurements
+
+Measured outside the eval pipeline. The per-version summary (Pixel tok/s, probe scores) lives in
+`versions.yaml` (`measurements`) and is rendered in RESULTS_TABLES.md; the detailed logs stay here.
+
+### Speed on the Pixel 8
+
+#### v10 quants (2026-10-17)
+
+kiln-bench on the Pixel 8 (Tensor G3), 2026-10-17, kiln main at 6b5d57b, android-arm64 CPU build.
+Each format ran 3 times in each of two passes, the second pass in reverse order, waiting for full
+CPU clocks and 20 s of rest before each format. The prompt is kiln-bench's ~65-token chat prompt;
+the model stops on its own, so answer length differs by format (26 to 81 tokens). Q4_0-imat and
+Q4_K_M-imat got 6 more runs each, alternating, because one Q4_0-imat run was disturbed (15.7 tok/s).
+
+| format | file | generation tok/s, median (range) | prompt read, median | peak RAM | runs |
+|---|---|---|---|---|---|
+| Q8_0 | 812 MB | 24.5 (21.9 to 25.7) | 389 ms | 1,775 MB | 6 |
+| Q6_K | 630 MB | 26.9 (23.5 to 30.4) | 542 ms | 1,411 MB | 6 |
+| Q5_K_M | 578 MB | 29.3 (26.5 to 33.1) | 552 ms | 1,307 MB | 6 |
+| **Q4_K_M-imat** | **529 MB** | **34.0** (30.7 to 36.7) | 460 ms | 1,210 MB | 12 |
+| Q4_0-imat | 502 MB | **35.9** (15.7 to 40.1) | 409 ms | 1,148 MB | 12 |
+| IQ4_XS-imat | 504 MB | 29.1 (27.6 to 32.7) | 789 ms | 957 MB | 6 |
+| Q3_K_M-imat | 466 MB | 30.4 (27.5 to 33.6) | 723 ms | 964 MB | 6 |
+| IQ3_M-imat | 454 MB | 19.4 (18.1 to 21.2) | 1,646 ms | 906 MB | 6 |
+
+In the 6 alternating runs, Q4_0-imat ran 35.2 to 40.1 tok/s and Q4_K_M-imat 33.4 to 36.6.
+
+#### v11 and v11-trim38k (2026-10-19)
+
+v11's file is the same size and architecture as v10's, so its tok/s matches; its saving is in tokens
+per answer: 21 against 45 on test_clean (20 against 44 over the training targets). v11-trim38k then
+makes every token cheaper, because the output layer scores 38k instead of 248k entries.
+
+kiln-cli 0.5.0 on the Pixel 8 (CPU, charging), Q4_K_M-imat, raw 11-token prompt, the two files
+alternating with 15 s rest, 5 runs each:
+
+| file | size | generation tok/s, median (range) |
+|---|---|---|
+| v11 | 529 MB | 35.4 (33.2 to 36.7) |
+| **v11-trim38k** | **343 MB** | **51.5** (50.2 to 53.5) |
+
+kiln reports the trimmed model at 0.54B parameters and 0.34 GB resident.
+
+In the app (system prompt cached, greedy), the same messages:
+
+| message | v11 | v11-trim38k |
+|---|---|---|
+| salary 45k pelam, rickshaw 60, electricity bill 1250.50 (32 tokens out) | 1.8 s | 1.1 s |
+| lunch -800, abbu dilo +5000 (21 tokens) | 1.3 s | 0.7 s |
+| sare tin hajar tk bazar, cha 20 (17 tokens) | 1.6 s | 0.7 s |
+| warm-up "chaa 10" (7 tokens) | 32.3 tok/s | 47.7 tok/s |
+
+Against v10 (JSON, untrimmed, ~45 tokens at ~34 tok/s, about 1.3 s of generation per message), a
+typical v11-trim38k answer of ~21 tokens at ~50 tok/s is about 0.4 s: roughly three times faster.
+
+What it says:
+- **Down to 4 bits, smaller is faster,** because generation is limited by reading the weights from memory.
+- **Below 4 bits it stops paying.** IQ4_XS and Q3_K_M are no faster than Q4_K_M and take 0.7 to 0.8 s to read the prompt instead of 0.46 s. IQ3_M is the slowest file of all: its codebook lookups cost more CPU than its 75 fewer MB save.
+- **Q4_0-imat is the fastest,** about 6% ahead of Q4_K_M-imat (9% in the alternating runs), as kiln's QUANT.md found for LFM2.5. For a typical 45-token Hishab answer that is about 0.1 s per message. It scores 93.7 on test_clean but 77.9 on numbers_clean against Q4_K_M-imat's 79.2, so Q4_K_M-imat stays the pick.
+- **RAM:** the K and I quants below 5 bits peak at about 0.9 to 1.2 GB; Q8_0 needs 1.8 GB.
+
+### Phone probes, Q6_K through kiln-cli
+
+v5 to v7 were rerun together on 2026-10-17, and v8 later the same day, with the same kiln-cli binary. Earlier runs recorded
+v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token between builds and
+thread counts. v9 and v10 were run on the published Hub files.
+
+| probe | want | v5 | v6 | v7 | v8 | v9 Q6_K / Q4_K_M-imat | v10 (both) |
+|---|---|---|---|---|---|---|---|
+| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ | 3000 | 3000 |
+| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ | ✓ | ✓ |
+| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ | 150000 salary | ✓ |
+| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 | 26000 / 20000 | 25000 |
+| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ | ✓ | ✓ |
+| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ | ✓ | ✓ |
+| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ | ✓ | ✓ |
+| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 | ✓ | ✓ |
+| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** | **17/20** (both) | **18/20** |
+
+v7's miss on "ekush hajar taka vara dilam" returns nothing at all. That is a new failure type,
+probably from the no-transaction rows added in v7, and it is worse for a user than a wrong
+category because the entry silently disappears.
+
+#### v11-trim38k, v12, v13 (2026-10-21, Mac kiln-cli, `--fmt pipe_signed`)
+
+Every probe any of the six files misses (the other 13 are right in all six):
+
+| probe | want | v11-trim38k Q4_K_M-imat | v11-trim38k Q6_K | v12-trim38k Q4_K_M-imat | v12-trim38k Q6_K | v13-trim38k Q4_K_M-imat | v13-trim38k Q6_K |
+|---|---|---|---|---|---|---|---|
+| sare tin hajar takar bazar korlam | 3500 | ✓ | ✓ | 3000 | 3000 | 3000 | 3000 |
+| ekush hajar taka vara dilam | 21000 | 12000 | 12000 | 10000 | 10000 | 10000 | 10000 |
+| bish hajar pachsho takar phone kinlam | 20500 | 25000 | 2500 | ✓ | ✓ | ✓ | 20000 |
+| der lakh taka pelam abbu theke | 150000 gift | ✓ | salary | ✓ | ✓ | ✓ | ✓ |
+| sat sho taka oushudh | 700 medical | other | other | ✓ | ✓ | food | food |
+| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 15000 | 15000 | ✓ | ✓ | 15000 | 15000 |
+| exact | | 16/20 | 15/20 | 18/20 | 18/20 | 16/20 | 15/20 |
+
+The misses are the same handful of borderline probes flipping between runs ("oushudh" and
+"১৫ হাজার ৫০০" were missed by v11-trim38k too, right in v12, missed again in v13), not a new
+failure class. On the 306-row numbers_clean_v2, which tests the same skills at scale, v13
+Q4_K_M-imat scores 89.2 against v12's 74.2. "sare tin hajar" (3500) and "ekush hajar" (21000)
+stay the two stubborn amount readings.
+
+### A GGUF-only output glitch (v8)
+
+v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows (v9: Q6_K 0, Q4_K_M-imat 1). In each one the
+description contains a number word and the output jumps straight into digits, skipping the
+`","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never does
+this. The app's lenient parser drops such entries, so the user would see a missing line.
 ## Per version
 
 ### v1-v2: notebooks (Dec 2025 to Jan 2026)
@@ -174,114 +304,5 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Training:** v12 recipe on `train_v13`, epoch picked on `validation_v2` (`train.py --val-split`), best epoch 2, 92 min; trimmed to 38k tokens (6,037 used by the data, same as v12).
 - **Result, Q4_K_M-imat (v12-trim38k in brackets):** test_clean_v2 **94.2** (89.6), numbers_clean_v2 **89.2** (74.5), small_amounts_v2 **85.5** (82.9); on the old clean sets test_clean **94.3** (91.8), numbers_clean **90.2** (78.2), small_amounts **86.2** (81.6); test 79.0 (79.2); numbers 74.8 (84.3). bf16: test_clean 94.3, numbers_clean 90.9, small_amounts 88.5, test_clean_v2 94.4, numbers_clean_v2 89.5, small_amounts_v2 88.2. All 90 small amounts still read right. Wrong messages on test_clean (bf16): 27 (v12: 36), count 10, category 13; numbers_clean 29 (v12: 69).
 - **The `numbers` drop is the relabel, checked:** of the 52 `numbers` messages v12 got right and v13 gets wrong, 29 are exactly the label both v2 labellers agreed on (the old template gold is what changed), 14 are rows the v2 labellers disagree on, 9 are real regressions. On `test` the same split is 9 / 4 / 4. The original-label sets now measure agreement with the old conventions.
+- **Probes (20 spoken amounts, Mac kiln-cli):** Q4_K_M-imat 16/20, Q6_K 15/20 (v12: 18/20 both). The two extra misses ("sat sho taka oushudh" as food, "১৫ হাজার ৫০০" as 15000) are borderline probes v11-trim38k also missed; on the 306-row numbers_clean_v2 v13 is 15 points ahead. Detail under Hand measurements.
 - **Verdict:** clear win on every clean set, biggest where the labels were wrong (numbers_clean +12). Not published or in the app yet.
-
-## Open problems
-
-1. **Label noise.** Fixed for the Gemini rows in v10 (test_clean 92.2) and for the template, number-word and lexicon rows in v13 (numbers_clean 90.2). Was open for the Codex-template rows: their income and gift categories disagree with the guideline (numbers_clean, see v10). The 42 + 40 held-out rows and 276 train rows where the two labellers disagree need a human (`splits_clean/disagreements.jsonl`).
-2. ~~GGUF Bangla gap~~ **Solved in v9**: it was transformers 5 mis-tokenizing Bengali during training, not llama.cpp (see v9). Worth reporting upstream to transformers.
-3. **Dropped entries.** v7 sometimes returned `[]` or dropped a middle item, and v8 GGUF occasionally writes broken JSON that the app drops. Worth a dedicated probe set, since silent misses are the worst failure for a ledger app.
-4. ~~**Amounts under 10 taka.**~~ **Fixed in v12** (small_amounts 23.0 to 81.6, every small amount read right). Was: "5 taka rickshaw bhara" came out as `-500` (v11-trim38k and L20 alike). No training row has an amount under 10, and a lone "5" in training almost always means "5 hajar" or "5 sho"; the eval sets cannot see it (smallest amounts: test_clean 15, numbers_clean 10). v12 needs a few hundred 1 to 9 taka rows ("2 tk cha", "৫ টাকা") and some in the eval sets.
-5. **No real user messages.** Every eval set is synthetic, and people will type messier Banglish than this.
-
-## Hand measurements
-
-Measured outside the eval pipeline, so they are not in the generated tables.
-
-### Speed on the Pixel 8
-
-#### v10 quants (2026-10-17)
-
-kiln-bench on the Pixel 8 (Tensor G3), 2026-10-17, kiln main at 6b5d57b, android-arm64 CPU build.
-Each format ran 3 times in each of two passes, the second pass in reverse order, waiting for full
-CPU clocks and 20 s of rest before each format. The prompt is kiln-bench's ~65-token chat prompt;
-the model stops on its own, so answer length differs by format (26 to 81 tokens). Q4_0-imat and
-Q4_K_M-imat got 6 more runs each, alternating, because one Q4_0-imat run was disturbed (15.7 tok/s).
-
-| format | file | generation tok/s, median (range) | prompt read, median | peak RAM | runs |
-|---|---|---|---|---|---|
-| Q8_0 | 812 MB | 24.5 (21.9 to 25.7) | 389 ms | 1,775 MB | 6 |
-| Q6_K | 630 MB | 26.9 (23.5 to 30.4) | 542 ms | 1,411 MB | 6 |
-| Q5_K_M | 578 MB | 29.3 (26.5 to 33.1) | 552 ms | 1,307 MB | 6 |
-| **Q4_K_M-imat** | **529 MB** | **34.0** (30.7 to 36.7) | 460 ms | 1,210 MB | 12 |
-| Q4_0-imat | 502 MB | **35.9** (15.7 to 40.1) | 409 ms | 1,148 MB | 12 |
-| IQ4_XS-imat | 504 MB | 29.1 (27.6 to 32.7) | 789 ms | 957 MB | 6 |
-| Q3_K_M-imat | 466 MB | 30.4 (27.5 to 33.6) | 723 ms | 964 MB | 6 |
-| IQ3_M-imat | 454 MB | 19.4 (18.1 to 21.2) | 1,646 ms | 906 MB | 6 |
-
-In the 6 alternating runs, Q4_0-imat ran 35.2 to 40.1 tok/s and Q4_K_M-imat 33.4 to 36.6.
-
-#### v11 and v11-trim38k (2026-10-19)
-
-v11's file is the same size and architecture as v10's, so its tok/s matches; its saving is in tokens
-per answer: 21 against 45 on test_clean (20 against 44 over the training targets). v11-trim38k then
-makes every token cheaper, because the output layer scores 38k instead of 248k entries.
-
-kiln-cli 0.5.0 on the Pixel 8 (CPU, charging), Q4_K_M-imat, raw 11-token prompt, the two files
-alternating with 15 s rest, 5 runs each:
-
-| file | size | generation tok/s, median (range) |
-|---|---|---|
-| v11 | 529 MB | 35.4 (33.2 to 36.7) |
-| **v11-trim38k** | **343 MB** | **51.5** (50.2 to 53.5) |
-
-kiln reports the trimmed model at 0.54B parameters and 0.34 GB resident.
-
-In the app (system prompt cached, greedy), the same messages:
-
-| message | v11 | v11-trim38k |
-|---|---|---|
-| salary 45k pelam, rickshaw 60, electricity bill 1250.50 (32 tokens out) | 1.8 s | 1.1 s |
-| lunch -800, abbu dilo +5000 (21 tokens) | 1.3 s | 0.7 s |
-| sare tin hajar tk bazar, cha 20 (17 tokens) | 1.6 s | 0.7 s |
-| warm-up "chaa 10" (7 tokens) | 32.3 tok/s | 47.7 tok/s |
-
-Against v10 (JSON, untrimmed, ~45 tokens at ~34 tok/s, about 1.3 s of generation per message), a
-typical v11-trim38k answer of ~21 tokens at ~50 tok/s is about 0.4 s: roughly three times faster.
-
-What it says:
-- **Down to 4 bits, smaller is faster,** because generation is limited by reading the weights from memory.
-- **Below 4 bits it stops paying.** IQ4_XS and Q3_K_M are no faster than Q4_K_M and take 0.7 to 0.8 s to read the prompt instead of 0.46 s. IQ3_M is the slowest file of all: its codebook lookups cost more CPU than its 75 fewer MB save.
-- **Q4_0-imat is the fastest,** about 6% ahead of Q4_K_M-imat (9% in the alternating runs), as kiln's QUANT.md found for LFM2.5. For a typical 45-token Hishab answer that is about 0.1 s per message. It scores 93.7 on test_clean but 77.9 on numbers_clean against Q4_K_M-imat's 79.2, so Q4_K_M-imat stays the pick.
-- **RAM:** the K and I quants below 5 bits peak at about 0.9 to 1.2 GB; Q8_0 needs 1.8 GB.
-
-### Phone probes, Q6_K through kiln-cli
-
-v5 to v7 were rerun together on 2026-10-17, and v8 later the same day, with the same kiln-cli binary. Earlier runs recorded
-v5 4/20 and v6 16/20; greedy decoding on CPU can flip a borderline token between builds and
-thread counts. v9 and v10 were run on the published Hub files.
-
-| probe | want | v5 | v6 | v7 | v8 | v9 Q6_K / Q4_K_M-imat | v10 (both) |
-|---|---|---|---|---|---|---|---|
-| ponero hajar taka salary pelam | 15000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| sare tin hajar takar bazar korlam | 3500 | 3000 | 3000 | ✓ | ✓ | 3000 | 3000 |
-| rickshaw vara ek hajar pachsho | 1500 | 1000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| dui lakh bish hajar taka loan nilam | 220000 | 20000 | 210000 | ✓ | ✓ | ✓ | ✓ |
-| der lakh taka pelam abbu theke | 150000 | ✓ | ✓ | ✓ | ✓ | 150000 salary | ✓ |
-| cha khelam chollish taka | 40 | 400 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| lunch tin sho ponchash taka | 350 | 300 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| paytallish hajar taka salary | 45000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| eksho bish taka recharge | 120 | 100 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| bish hajar pachsho takar phone kinlam | 20500 | 2000 | 25000 | 25000 | 25000 | 26000 / 20000 | 25000 |
-| sat sho taka oushudh | 700 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| ekush hajar taka vara dilam | 21000 rent | 10000 | 21000 other | **no entry** | ✓ | ✓ | ✓ |
-| 15 hajar 500 taka tuition fee | 15500 | 500 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| pach hajar 2 sho taka bazar | 5200 | 2000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| পনেরো হাজার টাকা বেতন পেলাম | 15000 | 11000 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| আড়াই হাজার টাকার ওষুধ | 2500 | 18000 | 1500 | ✓ | ✓ | ✓ | ✓ |
-| ১৫ হাজার ৫০০ টাকা বাসা ভাড়া | 15500 | 500 | 1500 | 15000 | ✓ | ✓ | ✓ |
-| সাড়ে তিন হাজার টাকা বাজার | 3500 | 3000 | ✓ | ✓ | split in 2 | ✓ | ✓ |
-| dersho taka cha nasta | 150 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| salary pelam 80k | 80000 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| **exact** | | **6/20** | **14/20** | **17/20** | **18/20** | **17/20** (both) | **18/20** |
-
-v7's miss on "ekush hajar taka vara dilam" returns nothing at all. That is a new failure type,
-probably from the no-transaction rows added in v7, and it is worse for a user than a wrong
-category because the entry silently disappears.
-
-### A GGUF-only output glitch (v8)
-
-v8 Q6_K wrote invalid JSON on 3 of 357 numbers rows (v9: Q6_K 0, Q4_K_M-imat 1). In each one the
-description contains a number word and the output jumps straight into digits, skipping the
-`","amount":` part, for example `"description":"তেল বিক্রির চার000.0,`. The bf16 model never does
-this. The app's lenient parser drops such entries, so the user would see a missing line.

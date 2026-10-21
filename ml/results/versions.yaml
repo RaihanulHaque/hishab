@@ -14,6 +14,8 @@
 #   hub          Hugging Face model repo of what was published (bf16; -GGUF next to it)
 #   change       one line: what changed against the previous version
 #   training     optional note shown instead of the logged training facts (trims, pruning)
+#   measurements optional hand measurements (not in the eval files): pixel_tok_s {quant: tok/s} with
+#                pixel_how, pixel_speedup, probes {quant: "n/20"} from ml/scripts/probe_gguf.py, notes
 #   status       app | best | superseded | experiment | parked
 #   app_quant    the file the app ships (for status app/best)
 
@@ -46,6 +48,10 @@ versions:
     train_split: ""
     change: +42 targeted hand-written rows (shipped in the first app)
     status: superseded
+    measurements:
+      probes: {Q6_K: 6/20}
+      notes: spelled-out amounts fail (numbers set 13.4)
+
   - label: v6
     run: qwen3.5-0.8b__json__lora__v6
     gguf_run: qwen3.5-0.8b__json__lora__v6
@@ -53,6 +59,9 @@ versions:
     train_split: ""
     change: number-word engine and Codex templates
     status: superseded
+    measurements:
+      probes: {Q6_K: 14/20}
+
   - label: v7
     run: qwen3.5-0.8b__json__lora__v7
     gguf_run: qwen3.5-0.8b__json__lora__v7
@@ -62,6 +71,9 @@ versions:
     change: stated totals, typing noise, no-transaction rows
     training: LoRA, 4 of 5 epochs (preempted at step 5,287; resumed run kept the epoch-4 weights), time not recorded
     status: superseded
+    measurements:
+      probes: {Q6_K: 17/20}
+
   - label: v8
     date: 2026-10-17
     run: qwen3.5-0.8b__json__full__v8
@@ -72,6 +84,9 @@ versions:
     hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v8
     change: full fine-tune instead of LoRA
     status: superseded
+    measurements:
+      probes: {Q6_K: 18/20, Q4_K_M-imat: 18/20}
+
   - label: v9
     date: 2026-10-17
     run: qwen3.5-0.8b__json__full__v9
@@ -82,6 +97,9 @@ versions:
     hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v9
     change: tokenizer loaded faithfully from tokenizer.json
     status: superseded
+    measurements:
+      probes: {Q6_K: 17/20, Q4_K_M-imat: 17/20}
+
   - label: v10
     date: 2026-10-17
     run: qwen3.5-0.8b__json__full__v10
@@ -92,6 +110,11 @@ versions:
     hub: ryuma007/hishab-qwen3.5-0.8b-json-full-v10
     change: Gemini training rows relabelled by two labellers (guideline v1)
     status: superseded
+    measurements:
+      pixel_tok_s: {Q4_K_M-imat: 34.0, Q4_0-imat: 35.9, Q6_K: 26.9, Q8_0: 24.5}
+      pixel_how: kiln-bench, 2026-10-17, medians of 6 to 12 alternating runs
+      probes: {Q6_K: 18/20, Q4_K_M-imat: 18/20, Q4_0-imat: 19/20}
+
   - label: v11
     date: 2026-10-19
     run: qwen3.5-0.8b__pipe_signed__full__v11
@@ -102,6 +125,11 @@ versions:
     hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v11
     change: pipe output (description|-800|category), 21 tokens per answer instead of 45
     status: superseded
+    measurements:
+      pixel_tok_s: {Q4_K_M-imat: 35.4}
+      pixel_how: kiln-cli, 2026-10-19, 5 runs alternating with v11-trim38k
+      notes: 21 output tokens per answer instead of 45
+
   - label: v11-trim38k
     date: 2026-10-19
     run: qwen3.5-0.8b__pipe_signed__full__v11
@@ -113,6 +141,12 @@ versions:
     change: vocabulary trimmed 248k to 38k tokens (343 MB, ~45% faster), no retraining
     training: no training; v11's weights with the vocabulary sliced
     status: superseded
+    measurements:
+      pixel_tok_s: {Q4_K_M-imat: 51.5}
+      pixel_how: kiln-cli, 2026-10-19, 5 runs alternating with v11
+      probes: {Q6_K: 15/20, Q4_K_M-imat: 16/20}
+      notes: about 0.4 s to write a typical answer (v10 about 1.3 s)
+
   - label: v11-trim38k-L20
     date: 2026-10-20
     run: qwen3.5-0.8b__pipe_signed__full__v11__trim38k__L20
@@ -122,6 +156,9 @@ versions:
     change: 4 of 24 layers removed and healed (288 MB, ~24% faster, numbers_clean -2)
     training: healed 2 epochs from v11-trim38k (KL to it + 0.2 CE), lr 2e-5, 34 min
     status: experiment
+    measurements:
+      pixel_speedup: +24% generation vs v11-trim38k (median of 6 alternating pairs; phone throttled)
+
   - label: v12-trim38k
     date: 2026-10-21
     run: qwen3.5-0.8b__pipe_signed__full__v12
@@ -133,6 +170,10 @@ versions:
     change: +1,041 rows with 1 to 9 taka amounts
     status: app
     app_quant: Q4_K_M-imat
+    measurements:
+      probes: {Q6_K: 18/20, Q4_K_M-imat: 18/20}
+      notes: in-app answers all right on 2026-10-21 ("5 taka rickshaw bhara" -5); speed not comparable (phone charging and throttled)
+
   - label: v13-trim38k
     date: 2026-10-21
     run: qwen3.5-0.8b__pipe_signed__full__v13
@@ -141,4 +182,7 @@ versions:
     train_split: train_v13
     change: template and lexicon rows relabelled; labelling guideline v2
     status: best
+    measurements:
+      probes: {Q6_K: 15/20, Q4_K_M-imat: 16/20}
+      notes: borderline probes flip between runs ("oushudh", "১৫ হাজার ৫০০" missed as in v11-trim38k); detail in EXPERIMENTS.md
     app_quant: Q4_K_M-imat

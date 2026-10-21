@@ -165,6 +165,24 @@ count = wrong number of entries; amount = a wrong amount; type = income/expense 
 | v13-trim38k | bf16 | 9 of 76 | 0 | 0 | 3 | 6 | grocery to food 2, other to loan 1, food to other 1 |
 | v13-trim38k | Q4_K_M-imat | 11 of 76 | 1 | 0 | 2 | 8 | grocery to food 2, grocery to mobile_recharge 1, food to other 1 |
 
+## Phone measurements (hand-recorded in versions.yaml)
+
+Not from the eval pipeline: Pixel 8 speed (kiln) and the 20 spoken-amount probes (`ml/datasets/probes_numbers.jsonl` through kiln-cli on the Mac, `ml/scripts/probe_gguf.py`). Per-probe detail is in EXPERIMENTS.md.
+
+| version | Pixel 8 generation (tok/s) | how | probes | notes |
+|---|---|---|---|---|
+| v5 |  |  | Q6_K 6/20 | spelled-out amounts fail (numbers set 13.4) |
+| v6 |  |  | Q6_K 14/20 |  |
+| v7 |  |  | Q6_K 17/20 |  |
+| v8 |  |  | Q6_K 18/20, Q4_K_M-imat 18/20 |  |
+| v9 |  |  | Q6_K 17/20, Q4_K_M-imat 17/20 |  |
+| v10 | Q4_K_M-imat 34.0, Q4_0-imat 35.9, Q6_K 26.9, Q8_0 24.5 | kiln-bench, 2026-10-17, medians of 6 to 12 alternating runs | Q6_K 18/20, Q4_K_M-imat 18/20, Q4_0-imat 19/20 |  |
+| v11 | Q4_K_M-imat 35.4 | kiln-cli, 2026-10-19, 5 runs alternating with v11-trim38k |  | 21 output tokens per answer instead of 45 |
+| v11-trim38k | Q4_K_M-imat 51.5 | kiln-cli, 2026-10-19, 5 runs alternating with v11 | Q6_K 15/20, Q4_K_M-imat 16/20 | about 0.4 s to write a typical answer (v10 about 1.3 s) |
+| v11-trim38k-L20 | +24% generation vs v11-trim38k (median of 6 alternating pairs; phone throttled) |  |  |  |
+| v12-trim38k |  |  | Q6_K 18/20, Q4_K_M-imat 18/20 | in-app answers all right on 2026-10-21 ("5 taka rickshaw bhara" -5); speed not comparable (phone charging and throttled) |
+| v13-trim38k |  |  | Q6_K 15/20, Q4_K_M-imat 16/20 | borderline probes flip between runs ("oushudh", "১৫ হাজার ৫০০" missed as in v11-trim38k); detail in EXPERIMENTS.md |
+
 ## Training
 
 Best epoch is the lowest validation loss; v11 on, losses are per token of the shorter pipe answer.

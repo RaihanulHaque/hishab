@@ -1,6 +1,6 @@
 ---
 name: hishab-release
-description: End-to-end workflow for a new Hishab model version - new training data, Modal fine-tuning, vocabulary trimming, GGUF build and eval, writing it up completely in ml/results/EXPERIMENTS.md, publishing model and dataset to Hugging Face, and switching the hishab_offline app (Pixel test, release APK). Use it whenever a Hishab model is trained, retrained, trimmed, pruned, quantized, evaluated, compared, published or shipped, whenever EXPERIMENTS.md needs a new version or experiment, or when the user says things like "train v13", "publish it", "switch the app to the new model", "add it to the experiments", "build the release" - even if they name only one of these steps.
+description: End-to-end workflow for a new Hishab model version - new training data, Modal fine-tuning, vocabulary trimming, GGUF build and eval, logging it in ml/results/versions.yaml + EXPERIMENTS.md and regenerating RESULTS_TABLES.md, publishing model and dataset to Hugging Face, and switching the hishab_offline app (Pixel test, release APK). Use it whenever a Hishab model is trained, retrained, trimmed, pruned, quantized, evaluated, compared, published or shipped, whenever EXPERIMENTS.md needs a new version or experiment, or when the user says things like "train v13", "publish it", "switch the app to the new model", "add it to the experiments", "build the release" - even if they name only one of these steps.
 ---
 
 # Hishab model release
@@ -91,31 +91,41 @@ older sets stay for comparison with older models.
   (build the prompt from `hishab.prompts.system_prompt('pipe_signed')` + Qwen chat markup with an
   empty `<think>` block). Probe the target case and its contrasts ("5 taka" and "5 hajar").
 
-## 6. Results docs: registry + generated tables + story
+## 6. Results docs: versions.yaml + RESULTS_TABLES.md + EXPERIMENTS.md, every version
 
-The numbers are generated; only the story is written by hand. Nothing can be half-updated as long
-as the version is in the registry.
+Three files, all three updated for every version or experiment (shipped or not). The numbers are
+generated; only the story is written by hand, so nothing can be half-updated.
 
-1. **Register the version** in `ml/results/versions.yaml` (label, date, run, gguf_run, fmt,
-   train_split, dataset, hub, one-line change, status). When it replaces the app model or becomes
-   the best, update `app:` / `best:` at the top and the old entry's `status`.
-2. **Refresh and render:**
+1. **`ml/results/versions.yaml`:** add the version's entry: label, date, run, gguf_run, fmt,
+   train_split, dataset, hub, a one-line `change`, `status`, and `measurements` for anything measured
+   by hand (`pixel_tok_s` {quant: tok/s} with `pixel_how`, `probes` {quant: "n/20"}, `notes`). Use
+   `training:` only when the run's eval_hf.json carries another run's metadata (trims, pruning).
+   If it becomes the app model or the best, update `app:` / `best:` at the top and the previous
+   holder's `status`.
+2. **Probes:** run the 20 spoken-amount probes on the app quant and Q6_K and record them:
+   `python ml/scripts/probe_gguf.py --model <gguf> --fmt pipe_signed`.
+3. **Regenerate the tables:**
    ```bash
-   modal run ml/modal_app/collect_results.py      # reads every registered run's evals -> results_cache.json
+   modal run ml/modal_app/collect_results.py      # every registered run's evals -> results_cache.json
    python ml/results/build_tables.py              # writes RESULTS_TABLES.md
    ```
-   Check the new version appears in the status, leaderboard, per-quant, per-language, errors and
-   training tables. A blank cell means an eval wasn't run: go back to step 4, don't type a number.
-3. **Write the story** in `ml/results/EXPERIMENTS.md` under "Per version": problem, data, training,
-   the before/after on the current eval sets (copied from RESULTS_TABLES.md), the targeted error
-   class, probes, verdict. Update "Where things stand" and "Open problems". Hand measurements (phone
-   speed, probes) go under "Hand measurements", since they are not in the eval files.
-4. **New eval set?** Add it to `current_eval` or `legacy_eval` in `versions.yaml` and a one-line
-   description to `SET_DOC` in `build_tables.py`; re-score the older versions on it (bf16:
+   A blank cell means an eval wasn't run: go back to step 4, never type a number.
+4. **`ml/results/EXPERIMENTS.md`:** append the version's story at the **end of the file** (the
+   newest version is always the last section): problem, data, training, before/after on the current
+   eval sets (copied from RESULTS_TABLES.md), the targeted error class, probes, verdict. Update
+   "Where things stand" and "Open problems"; add any detailed hand-measurement log (per-probe
+   results, speed runs) under "Hand measurements".
+5. **Check all three before committing:**
+   ```bash
+   grep -n "label: vN" ml/results/versions.yaml
+   grep -c "| vN" ml/results/RESULTS_TABLES.md      # as many tables as the previous version
+   tail -n 15 ml/results/EXPERIMENTS.md              # the vN story is the last section
+   ```
+   Commit versions.yaml, results_cache.json, RESULTS_TABLES.md and EXPERIMENTS.md together.
+6. **New eval set?** Add it to `current_eval` or `legacy_eval` in `versions.yaml` and a one-line
+   description to `SET_DOC` in `build_tables.py`, and re-score the older versions on it (bf16:
    `train.py --eval-only <runs>`; GGUF: `gguf.py --runs <runs> --quants F16,Q6_K,Q4_K_M-imat,Q4_0-imat --split <set>`)
    so the leaderboard compares like with like.
-
-Experiments that are not shipped (pruning, MTP, ...) are registered too, with `status: experiment`.
 
 ## 7. Publish
 
