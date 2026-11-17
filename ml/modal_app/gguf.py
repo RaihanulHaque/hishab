@@ -23,7 +23,7 @@ from pathlib import Path
 import modal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from modal_app.common import DATA_DIR, RUNS_DIR, VOLUMES, app, gguf_image, hf_secret  # noqa: E402
+from modal_app.common import DATA_DIR, RUNS_DIR, VOLUMES, app, gguf_image, hf_secret, prune_note  # noqa: E402
 
 LLAMA = Path("/opt/llama.cpp")
 BIN = LLAMA / "build" / "bin"
@@ -393,7 +393,7 @@ def _render_card(run: str, repo: str, only: list[str] | None, dataset: str) -> t
                     f"projections of `{meta['hf_id']}`, {meta['epochs']:g} epochs, merged after training")
     card = MODEL_CARD.format(hf_id=meta["hf_id"], repo=repo, dataset=dataset, training=training, lr=meta["lr"],
                              train_rows=meta["train_rows"], repo_name=repo.split("/")[-1], example_output=example,
-                             format_note=note + (TRIM_NOTE.format(kept=meta['vocab_trim']['kept']) if meta.get('vocab_trim') else ''), rows="\n".join(rows), header=" | ".join(names[c] for c in cols),
+                             format_note=note + (TRIM_NOTE.format(kept=meta['vocab_trim']['kept']) if meta.get('vocab_trim') else '') + prune_note(meta), rows="\n".join(rows), header=" | ".join(names[c] for c in cols),
                              header_sep="---|" * len(cols), clean_note=CLEAN_NOTE if clean else "", first_file=files[0] if files else "<file>",
                              system_prompt=system_prompt(fmt).replace('"', "'"))
     return card, files

@@ -113,9 +113,70 @@ def probe_remote(run: str) -> dict:
     return out
 
 
+def _shrink_ffn(model, enc: list[tuple[list[int], int]], pad: int, ffn: int) -> dict:
+    """Width pruning (Minitron-style): keep the `ffn` most important MLP neurons in every layer.
+
+    A neuron's importance is the RMS of its activation (act(gate) * up, the input of down_proj) over
+    every real token of the calibration rows, times the norm of its down_proj column, i.e. how much
+    it typically writes into the residual stream. Every layer keeps the same count so the config
+    stays a single intermediate_size (llama.cpp reads one feed_forward_length); keep it a multiple
+    of 256 so the K-quants still apply to down_proj."""
+    layers = model.model.layers
+    for layer in layers:
+        assert all(hasattr(layer.mlp, n) for n in ("gate_proj", "up_proj", "down_proj")), type(layer.mlp)
+    old = layers[0].mlp.down_proj.in_features
+    if ffn % 256 or not 0 < ffn < old:
+        raise ValueError(f"ffn must be a multiple of 256 below {old}")
+    sq = [torch.zeros(old, device="cuda", dtype=torch.float32) for _ in layers]
+    state = {"mask": None, "n": 0}
+
+    def make_hook(i):
+        def hook(mod, args):
+            h = args[0].float()
+            m = state["mask"].unsqueeze(-1).float()
+            sq[i] += (h.pow(2) * m).sum(dim=(0, 1))
+        return hook
+
+    hooks = [layer.mlp.down_proj.register_forward_pre_hook(make_hook(i)) for i, layer in enumerate(layers)]
+    model.eval()
+    with torch.no_grad():
+        for ids, att, _ in _batches(enc, pad, 16, list(range(len(enc)))):
+            state["mask"] = att
+            state["n"] += att.sum().item()
+            model(input_ids=ids, attention_mask=att)
+    for h in hooks:
+        h.remove()
+
+    kept_share = []
+    for i, layer in enumerate(layers):
+        mlp = layer.mlp
+        score = (sq[i] / state["n"]).sqrt() * mlp.down_proj.weight.float().norm(dim=0)
+        keep = torch.topk(score, ffn).indices.sort().values
+        kept_share.append(round((score[keep].sum() / score.sum()).item(), 4))
+
+        def sliced(lin, dim):
+            new = torch.nn.Linear(lin.in_features if dim == 0 else ffn, ffn if dim == 0 else lin.out_features,
+                                  bias=lin.bias is not None, device=lin.weight.device, dtype=lin.weight.dtype)
+            with torch.no_grad():
+                new.weight.copy_(lin.weight[keep] if dim == 0 else lin.weight[:, keep])
+                if lin.bias is not None:
+                    new.bias.copy_(lin.bias[keep] if dim == 0 else lin.bias)
+            return new
+
+        mlp.gate_proj = sliced(mlp.gate_proj, 0)
+        mlp.up_proj = sliced(mlp.up_proj, 0)
+        mlp.down_proj = sliced(mlp.down_proj, 1)
+        if hasattr(mlp, "intermediate_size"):
+            mlp.intermediate_size = ffn
+    model.config.intermediate_size = ffn
+    print(f"ffn {old} -> {ffn}; share of importance kept per layer: {kept_share}", flush=True)
+    return {"from": old, "to": ffn, "calib_tokens": state["n"], "importance_kept": kept_share}
+
+
 @app.function(image=train_image, gpu="A100-80GB", timeout=4 * 60 * 60, volumes=VOLUMES, secrets=[hf_secret])
 def prune_remote(run: str, drop: list[int], epochs: float = 2, lr: float = 2e-5, batch: int = 16,
-                 train_split: str = "train_v10", limit: int = 0, ce_weight: float = 0.2) -> dict:
+                 train_split: str = "train_v10", limit: int = 0, ce_weight: float = 0.2,
+                 ffn: int = 0, agree_split: str = "test_clean", calib_rows: int = 1024) -> dict:
     import shutil
 
     from transformers import AutoModelForCausalLM
@@ -150,17 +211,22 @@ def prune_remote(run: str, drop: list[int], epochs: float = 2, lr: float = 2e-5,
     # full_attention_interval stays as it is: the GGUF converter writes it, llama.cpp ignores it when layer_types is present
     # transformers' cache mask uses config.layer_types too
     student.model.config = cfg
-    student.train()
-    for p in student.parameters():
-        p.requires_grad_(True)
-    n_params = sum(p.numel() for p in student.parameters()) / 1e6
-    print(f"student: {len(keep)} layers, {n_params:.0f}M params; dropped {drop}", flush=True)
 
     enc_fn = _encoder(tok, fmt)
     train_rows = _rows(train_split)
     if limit:
         train_rows = train_rows[:limit]
     enc = [enc_fn(r) for r in train_rows]
+
+    width = None
+    if ffn:
+        width = _shrink_ffn(student, enc[:calib_rows], tok.pad_token_id, ffn)
+
+    student.train()
+    for p in student.parameters():
+        p.requires_grad_(True)
+    n_params = sum(p.numel() for p in student.parameters()) / 1e6
+    print(f"student: {len(keep)} layers, ffn {student.config.intermediate_size}, {n_params:.0f}M params; dropped {drop}", flush=True)
     steps = int(epochs * ((len(enc) + batch - 1) // batch))
     opt = torch.optim.AdamW(student.parameters(), lr=lr, weight_decay=0.0, betas=(0.9, 0.95))
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=lr, total_steps=steps, pct_start=0.05, anneal_strategy="cos")
@@ -178,7 +244,7 @@ def prune_remote(run: str, drop: list[int], epochs: float = 2, lr: float = 2e-5,
         student.train()
         return hit / max(tot, 1)
 
-    tc = _rows("test_clean")
+    tc = _rows(agree_split)
     before = agreement(tc)
     print(f"agreement with teacher before healing: {before:.4f}", flush=True)
 
@@ -210,7 +276,8 @@ def prune_remote(run: str, drop: list[int], epochs: float = 2, lr: float = 2e-5,
     after = agreement(tc)
     print(f"agreement with teacher after healing: {after:.4f}", flush=True)
 
-    name = f"{run}__L{len(keep)}"
+    suffix = (f"L{len(keep)}" if drop else "") + (f"F{ffn}" if ffn else "")
+    name = f"{run}__{suffix}"
     dst = Path(RUNS_DIR) / name
     if dst.exists():
         shutil.rmtree(dst)
@@ -225,8 +292,10 @@ def prune_remote(run: str, drop: list[int], epochs: float = 2, lr: float = 2e-5,
     torch.cuda.empty_cache()
 
     spec = MODELS[meta["model_key"]]
-    results = {**meta, "run": name, "tag": f"{meta.get('tag', '')}+L{len(keep)}",
+    results = {**meta, "run": name, "tag": f"{meta.get('tag', '')}+{suffix}",
                "prune": {"source_run": run, "dropped_layers": drop, "n_layers": len(keep), "params_M": round(n_params),
+                         "ffn": student.config.intermediate_size, "width": width,
+                         "train_split": train_split, "agree_split": agree_split,
                          "epochs": epochs, "lr": lr, "batch": batch, "steps": steps, "ce_weight": ce_weight,
                          "teacher_agreement_before": before, "teacher_agreement_after": after,
                          "train_time_s": round(train_time), "log": log},
@@ -245,6 +314,11 @@ def probe(run: str):
 
 
 @app.local_entrypoint()
-def prune(run: str, drop: str, epochs: float = 2, lr: float = 2e-5, batch: int = 16, limit: int = 0, ce_weight: float = 0.2):
-    out = prune_remote.remote(run, [int(x) for x in drop.split(",")], epochs, lr, batch, limit=limit, ce_weight=ce_weight)
+def prune(run: str, drop: str = "", epochs: float = 2, lr: float = 2e-5, batch: int = 16, limit: int = 0,
+          ce_weight: float = 0.2, ffn: int = 0, train_split: str = "train_v10", agree_split: str = "test_clean"):
+    drops = [int(x) for x in drop.split(",") if x.strip()]
+    if not drops and not ffn:
+        raise SystemExit("nothing to prune: pass --drop and/or --ffn")
+    out = prune_remote.remote(run, drops, epochs, lr, batch, train_split=train_split, limit=limit,
+                              ce_weight=ce_weight, ffn=ffn, agree_split=agree_split)
     print(json.dumps(out, indent=1))

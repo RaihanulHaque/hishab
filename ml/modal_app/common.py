@@ -74,3 +74,20 @@ gguf_image = (
 )
 
 app = modal.App(APP_NAME)
+
+
+def prune_note(meta: dict) -> str:
+    """Model-card paragraph for a run made by prune_layers.py (empty for other runs)."""
+    p = meta.get("prune")
+    if not p:
+        return ""
+    what = []
+    if p.get("dropped_layers"):
+        what.append(f"layers {', '.join(map(str, p['dropped_layers']))} removed (24 to {p['n_layers']} layers)")
+    if p.get("width"):
+        what.append(f"every MLP narrowed from {p['width']['from']} to {p['width']['to']} neurons")
+    return (f"\n**Pruned.** Made from `{p['source_run']}`: {' and '.join(what)}, about {p['params_M']}M parameters. "
+            f"Then healed {p['epochs']:g} epochs on `{p.get('train_split', 'train')}` with all weights trainable, "
+            f"loss = KL to the unpruned model on answer tokens + {p['ce_weight']:g} x cross-entropy on the gold "
+            f"(lr {p['lr']:g}); top-1 agreement with the unpruned model {100 * p['teacher_agreement_after']:.1f}%. "
+            "The scores below are of this pruned model. Code: `ml/modal_app/prune_layers.py`.\n")
