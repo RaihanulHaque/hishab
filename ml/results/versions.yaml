@@ -21,7 +21,7 @@
 
 current_eval: [test_clean_v2, numbers_clean_v2, small_amounts_v2]   # labelling guideline v2
 legacy_eval: [test_clean, numbers_clean, small_amounts, test, numbers]
-quants: [F16, Q6_K, Q4_K_M-imat, Q4_0-imat]
+quants: [F16, Q6_K, Q4_K_M-imat, Q4_0-imat, Q3_K_M-imat, IQ3_M-imat]
 app: v13-trim38k
 best: v13-trim38k
 
@@ -202,7 +202,7 @@ versions:
     status: experiment
     measurements:
       probes: {Q6_K: 16/20, Q4_K_M-imat: 15/20}
-      notes: probes on Linux kiln-cli 2026-11-17; not yet timed on the Pixel (v11-trim38k-L20 was +24%)
+      notes: probes on Linux kiln-cli 2026-11-17; IQ3_M-imat (226 MB) and Q3_K_M-imat (237 MB) built 2026-11-18, IQ3_M-imat is the smallest file with Q4-level scores; none timed on the Pixel (v11-trim38k-L20 was +24%)
 
   - label: v13-trim38k-F2560
     date: 2026-11-17
@@ -213,3 +213,13 @@ versions:
     change: width pruning, every MLP 3584 -> 2560 neurons, healed on train_v13 (297 MB, ~1 point lower)
     training: healed 2 epochs from v13-trim38k (KL to it + 0.2 CE), lr 2e-5, ~50 min on one A100
     status: experiment
+
+  - label: v13-trim38k-L20-Q3qad
+    date: 2026-11-18
+    run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__L20__Q3
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__L20__Q3
+    fmt: pipe_signed
+    train_split: train_v13
+    change: quantization-aware distillation for Q3_K on top of v13-trim38k-L20 (237 MB; no better than plain Q3_K_M)
+    training: QAD from v13-trim38k-L20, 3 epochs, lr 1e-5, KL to v13-trim38k + 0.2 CE, fake Q3_K on 126 Linear weights
+    status: parked
