@@ -26,56 +26,61 @@ Scores are **exact match**: the message's set of (amount, category, type) equals
 | v13-trim38k | app | 94.4 | 94.2 | 89.5 | 89.2 | **88.2** | 85.5 |
 | v13-trim38k-L20 | experiment | **95.0** | **94.4** | **90.8** | **89.9** | **88.2** | **86.8** |
 | v13-trim38k-F2560 | experiment | 94.0 | 92.9 | 88.6 | 88.2 | 84.2 | 85.5 |
+| v13-trim38k-L20-Q3qad | parked | 93.4 |  | 89.9 |  | 82.9 |  |
 
 ## Per quant, current eval sets
 
 The app ships Q4_K_M-imat. File sizes (MB):
 
-| version | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat |
-|---|---|---|---|---|
-| v10 | 1517 | 630 | 529 | 502 |
-| v11 | 1517 | 630 | 529 | 502 |
-| v11-trim38k | 1076 | 443 | 343 | 316 |
-| v12-trim38k | 1076 | 443 | 343 | 316 |
-| v13-trim38k | 1076 | 443 | 343 | 316 |
-| v13-trim38k-L20 | 904 | 372 | 288 | 267 |
-| v13-trim38k-F2560 | 925 | 382 | 297 | 273 |
+| version | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat | Q3_K_M-imat | IQ3_M-imat |
+|---|---|---|---|---|---|---|
+| v10 | 1517 | 630 | 529 | 502 | 466 | 454 |
+| v11 | 1517 | 630 | 529 | 502 |  |  |
+| v11-trim38k | 1076 | 443 | 343 | 316 |  |  |
+| v12-trim38k | 1076 | 443 | 343 | 316 |  |  |
+| v13-trim38k | 1076 | 443 | 343 | 316 |  |  |
+| v13-trim38k-L20 | 904 | 372 | 288 | 267 | 237 | 226 |
+| v13-trim38k-F2560 | 925 | 382 | 297 | 273 |  |  |
+| v13-trim38k-L20-Q3qad |  |  |  |  | 237 |  |
 
 ### test_clean_v2
 
-| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat |
-|---|---|---|---|---|---|
-| v10 | 89.4 | 89.8 | 89.8 | 89.8 | 90.9 |
-| v11 | 89.6 | 89.8 | 90.2 | 89.6 | 89.4 |
-| v11-trim38k | 89.6 | 89.8 | 90.2 | 89.6 | 89.4 |
-| v12-trim38k | 90.7 | 90.7 | 90.2 | 89.8 | 91.5 |
-| v13-trim38k | 94.4 | 94.4 | 94.4 | 94.2 | **95.0** |
-| v13-trim38k-L20 | **95.0** | **95.0** | **94.6** | **94.4** | 94.8 |
-| v13-trim38k-F2560 | 94.0 | 94.0 | 93.4 | 92.9 | 94.4 |
+| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat | Q3_K_M-imat | IQ3_M-imat |
+|---|---|---|---|---|---|---|---|
+| v10 | 89.4 | 89.8 | 89.8 | 89.8 | 90.9 |  |  |
+| v11 | 89.6 | 89.8 | 90.2 | 89.6 | 89.4 |  |  |
+| v11-trim38k | 89.6 | 89.8 | 90.2 | 89.6 | 89.4 |  |  |
+| v12-trim38k | 90.7 | 90.7 | 90.2 | 89.8 | 91.5 |  |  |
+| v13-trim38k | 94.4 | 94.4 | 94.4 | 94.2 | **95.0** |  |  |
+| v13-trim38k-L20 | **95.0** | **95.0** | **94.6** | **94.4** | 94.8 | **93.8** | 93.4 |
+| v13-trim38k-F2560 | 94.0 | 94.0 | 93.4 | 92.9 | 94.4 |  |  |
+| v13-trim38k-L20-Q3qad | 93.4 |  |  |  |  | 93.2 |  |
 
 ### numbers_clean_v2
 
-| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat |
-|---|---|---|---|---|---|
-| v10 | 74.5 | 74.5 | 74.8 | 75.2 | 73.9 |
-| v11 | 75.8 | 75.8 | 75.5 | 76.1 | 74.2 |
-| v11-trim38k | 75.8 | 75.8 | 75.5 | 75.8 | 74.2 |
-| v12-trim38k | 74.2 | 74.2 | 74.5 | 74.2 | 73.9 |
-| v13-trim38k | 89.5 | 89.5 | 88.9 | 89.2 | **89.9** |
-| v13-trim38k-L20 | **90.8** | **90.8** | **90.8** | **89.9** | 89.5 |
-| v13-trim38k-F2560 | 88.6 | 88.9 | 88.6 | 88.2 | 87.9 |
+| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat | Q3_K_M-imat | IQ3_M-imat |
+|---|---|---|---|---|---|---|---|
+| v10 | 74.5 | 74.5 | 74.8 | 75.2 | 73.9 |  |  |
+| v11 | 75.8 | 75.8 | 75.5 | 76.1 | 74.2 |  |  |
+| v11-trim38k | 75.8 | 75.8 | 75.5 | 75.8 | 74.2 |  |  |
+| v12-trim38k | 74.2 | 74.2 | 74.5 | 74.2 | 73.9 |  |  |
+| v13-trim38k | 89.5 | 89.5 | 88.9 | 89.2 | **89.9** |  |  |
+| v13-trim38k-L20 | **90.8** | **90.8** | **90.8** | **89.9** | 89.5 | 88.9 | 88.9 |
+| v13-trim38k-F2560 | 88.6 | 88.9 | 88.6 | 88.2 | 87.9 |  |  |
+| v13-trim38k-L20-Q3qad | 89.9 |  |  |  |  | **89.2** |  |
 
 ### small_amounts_v2
 
-| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat |
-|---|---|---|---|---|---|
-| v10 | 52.6 | 52.6 | 52.6 | 51.3 | 56.6 |
-| v11 | 22.4 | 22.4 | 19.7 | 23.7 | 18.4 |
-| v11-trim38k | 22.4 | 22.4 | 22.4 | 26.3 | 18.4 |
-| v12-trim38k | 82.9 | 81.6 | 85.5 | 82.9 | 84.2 |
-| v13-trim38k | **88.2** | **89.5** | **90.8** | 85.5 | 84.2 |
-| v13-trim38k-L20 | **88.2** | 88.2 | 88.2 | **86.8** | **85.5** |
-| v13-trim38k-F2560 | 84.2 | 84.2 | 82.9 | 85.5 | 78.9 |
+| version | bf16 | F16 | Q6_K | Q4_K_M-imat | Q4_0-imat | Q3_K_M-imat | IQ3_M-imat |
+|---|---|---|---|---|---|---|---|
+| v10 | 52.6 | 52.6 | 52.6 | 51.3 | 56.6 |  |  |
+| v11 | 22.4 | 22.4 | 19.7 | 23.7 | 18.4 |  |  |
+| v11-trim38k | 22.4 | 22.4 | 22.4 | 26.3 | 18.4 |  |  |
+| v12-trim38k | 82.9 | 81.6 | 85.5 | 82.9 | 84.2 |  |  |
+| v13-trim38k | **88.2** | **89.5** | **90.8** | 85.5 | 84.2 |  |  |
+| v13-trim38k-L20 | **88.2** | 88.2 | 88.2 | **86.8** | **85.5** | **84.2** | 86.8 |
+| v13-trim38k-F2560 | 84.2 | 84.2 | 82.9 | 85.5 | 78.9 |  |  |
+| v13-trim38k-L20-Q3qad | 82.9 |  |  |  |  | 78.9 |  |
 
 ## Per language, current eval sets
 
@@ -99,6 +104,7 @@ Exact match per language; row counts in the header.
 | v13-trim38k-L20 | Q4_K_M-imat | 90.7 | 95.8 | 97.9 | 97.3 |
 | v13-trim38k-F2560 | bf16 | 90.2 | 94.1 | 99.0 | 97.3 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 89.1 | 93.3 | 99.0 | 94.5 |
+| v13-trim38k-L20-Q3qad | bf16 | 89.1 | 95.0 | 96.9 | 97.3 |
 
 ### numbers_clean_v2
 
@@ -118,6 +124,7 @@ Exact match per language; row counts in the header.
 | v13-trim38k-L20 | Q4_K_M-imat | 89.5 | 89.2 | 88.6 | 92.2 |
 | v13-trim38k-F2560 | bf16 | 87.9 | 88.0 | 88.6 | 90.6 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 87.1 | 86.7 | 91.4 | 90.6 |
+| v13-trim38k-L20-Q3qad | bf16 | 87.1 | 91.6 | 94.3 | 90.6 |
 
 ### small_amounts_v2
 
@@ -137,6 +144,7 @@ Exact match per language; row counts in the header.
 | v13-trim38k-L20 | Q4_K_M-imat | 96.0 | 73.7 | 88.2 | 86.7 |
 | v13-trim38k-F2560 | bf16 | 96.0 | 57.9 | 94.1 | 86.7 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 96.0 | 63.2 | 94.1 | 86.7 |
+| v13-trim38k-L20-Q3qad | bf16 | 92.0 | 68.4 | 88.2 | 80.0 |
 
 ## Wrong messages by first failing field, current eval sets
 
@@ -160,6 +168,7 @@ count = wrong number of entries; amount = a wrong amount; type = income/expense 
 | v13-trim38k-L20 | Q4_K_M-imat | 27 of 482 | 12 | 0 | 6 | 9 | other to shopping 2, grocery to shopping 1, tuition to transport 1 |
 | v13-trim38k-F2560 | bf16 | 29 of 482 | 10 | 1 | 5 | 13 | gift to shopping 2, medical to tuition 1, medical to shopping 1 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 34 of 482 | 13 | 2 | 6 | 13 | gift to shopping 2, medical to tuition 1, other to loan 1 |
+| v13-trim38k-L20-Q3qad | bf16 | 32 of 482 | 13 | 1 | 5 | 13 | shopping to grocery 2, other to food 2, medical to tuition 1 |
 
 ### numbers_clean_v2
 
@@ -179,6 +188,7 @@ count = wrong number of entries; amount = a wrong amount; type = income/expense 
 | v13-trim38k-L20 | Q4_K_M-imat | 31 of 306 | 2 | 3 | 4 | 22 | other to shopping 3, transport to food 2, transport to shopping 2 |
 | v13-trim38k-F2560 | bf16 | 35 of 306 | 2 | 5 | 5 | 23 | transport to shopping 3, transport to other 3, other to shopping 2 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 36 of 306 | 1 | 4 | 6 | 25 | transport to shopping 3, transport to other 3, other to gift 3 |
+| v13-trim38k-L20-Q3qad | bf16 | 31 of 306 | 0 | 4 | 5 | 22 | transport to food 3, transport to shopping 2, transport to other 2 |
 
 ### small_amounts_v2
 
@@ -198,6 +208,7 @@ count = wrong number of entries; amount = a wrong amount; type = income/expense 
 | v13-trim38k-L20 | Q4_K_M-imat | 10 of 76 | 0 | 1 | 3 | 6 | grocery to entertainment 1, other to shopping 1, grocery to shopping 1 |
 | v13-trim38k-F2560 | bf16 | 12 of 76 | 0 | 2 | 4 | 6 | grocery to entertainment 1, food to other 1, other to food 1 |
 | v13-trim38k-F2560 | Q4_K_M-imat | 11 of 76 | 1 | 1 | 4 | 5 | grocery to entertainment 1, food to other 1, grocery to shopping 1 |
+| v13-trim38k-L20-Q3qad | bf16 | 13 of 76 | 0 | 0 | 5 | 8 | grocery to entertainment 1, grocery to food 1, other to shopping 1 |
 
 ## Phone measurements (hand-recorded in versions.yaml)
 
@@ -216,7 +227,7 @@ Not from the eval pipeline: Pixel 8 speed (kiln) and the 20 spoken-amount probes
 | v11-trim38k-L20 | +24% generation vs v11-trim38k (median of 6 alternating pairs; phone throttled) |  |  |  |
 | v12-trim38k |  |  | Q6_K 18/20, Q4_K_M-imat 18/20 | in-app answers all right on 2026-10-21 ("5 taka rickshaw bhara" -5); speed not comparable (phone charging and throttled) |
 | v13-trim38k |  |  | Q6_K 15/20, Q4_K_M-imat 16/20 | in-app 2026-10-21, 5 of 6 right incl. both v2 rules (bou ke bazarer jonno -> grocery, bua er beton -> salary expense), "sat sho taka oushudh" as food; borderline probes flip between runs; speed not comparable (thermal status 2, charging) |
-| v13-trim38k-L20 |  |  | Q6_K 16/20, Q4_K_M-imat 15/20 | probes on Linux kiln-cli 2026-11-17; not yet timed on the Pixel (v11-trim38k-L20 was +24%) |
+| v13-trim38k-L20 |  |  | Q6_K 16/20, Q4_K_M-imat 15/20 | probes on Linux kiln-cli 2026-11-17; IQ3_M-imat (226 MB) and Q3_K_M-imat (237 MB) built 2026-11-18, IQ3_M-imat is the smallest file with Q4-level scores; none timed on the Pixel (v11-trim38k-L20 was +24%) |
 
 ## Training
 
@@ -239,6 +250,7 @@ Best epoch is the lowest validation loss; v11 on, losses are per token of the sh
 | v13-trim38k | 2026-10-21 | full | 3 | 2 | .2945 / .2558 / .2793 | 19,798 | train_v13 | 92 min |
 | v13-trim38k-L20 | 2026-11-17 |  |  |  |  |  | train_v13 | healed 2 epochs from v13-trim38k (KL to it + 0.2 CE), lr 2e-5, ~37 min on one A100 |
 | v13-trim38k-F2560 | 2026-11-17 |  |  |  |  |  | train_v13 | healed 2 epochs from v13-trim38k (KL to it + 0.2 CE), lr 2e-5, ~50 min on one A100 |
+| v13-trim38k-L20-Q3qad | 2026-11-18 |  |  |  |  |  | train_v13 | QAD from v13-trim38k-L20, 3 epochs, lr 1e-5, KL to v13-trim38k + 0.2 CE, fake Q3_K on 126 Linear weights |
 
 ## Training data
 
@@ -286,6 +298,7 @@ These sets use older labelling conventions; a newer model can score lower on the
 | v13-trim38k | 94.3 | 94.5 |  | 93.7 |  | 94.3 | 95.0 |
 | v13-trim38k-L20 | 95.0 | 95.0 |  | 94.3 |  | 94.5 | 95.0 |
 | v13-trim38k-F2560 | 93.9 | 93.9 |  | 93.7 |  | 93.3 | 94.3 |
+| v13-trim38k-L20-Q3qad | 93.1 |  |  |  |  |  |  |
 
 ### numbers_clean
 
@@ -299,6 +312,7 @@ These sets use older labelling conventions; a newer model can score lower on the
 | v13-trim38k | 90.9 | 91.2 |  | 90.9 |  | 90.2 | 90.9 |
 | v13-trim38k-L20 | 90.2 | 90.2 |  | 90.2 |  | 90.2 | 89.0 |
 | v13-trim38k-F2560 | 88.0 | 88.3 |  | 88.3 |  | 88.0 | 88.0 |
+| v13-trim38k-L20-Q3qad | 89.6 |  |  |  |  |  |  |
 
 ### small_amounts
 
@@ -311,6 +325,7 @@ These sets use older labelling conventions; a newer model can score lower on the
 | v13-trim38k | 88.5 |  |  |  |  | 86.2 |  |
 | v13-trim38k-L20 | 87.4 | 86.2 |  | 87.4 |  | 86.2 | 82.8 |
 | v13-trim38k-F2560 | 83.9 | 83.9 |  | 82.8 |  | 85.1 | 80.5 |
+| v13-trim38k-L20-Q3qad | 80.5 |  |  |  |  |  |  |
 
 ### test
 
@@ -331,6 +346,7 @@ These sets use older labelling conventions; a newer model can score lower on the
 | v13-trim38k | 79.3 |  |  |  |  | 79.0 |  |
 | v13-trim38k-L20 | 79.9 |  |  |  |  |  |  |
 | v13-trim38k-F2560 | 78.6 |  |  |  |  |  |  |
+| v13-trim38k-L20-Q3qad | 79.0 |  |  |  |  |  |  |
 
 ### numbers
 
@@ -349,3 +365,4 @@ These sets use older labelling conventions; a newer model can score lower on the
 | v13-trim38k | 76.2 |  |  |  |  | 74.8 |  |
 | v13-trim38k-L20 | 75.9 |  |  |  |  |  |  |
 | v13-trim38k-F2560 | 73.7 |  |  |  |  |  |  |
+| v13-trim38k-L20-Q3qad | 73.7 |  |  |  |  |  |  |

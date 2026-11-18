@@ -19,6 +19,7 @@ generated tables, so this file never has to be kept in sync by hand.
 - **Eval sets:** from v13 the headline sets are `test_clean_v2`, `numbers_clean_v2`, `small_amounts_v2`, labelled under guideline v2. The older sets stay in the legacy appendix; newer models can score lower there by following the new rules.
 - **Next:** real user corrections (opt-in export of review-sheet edits) rather than more synthetic rounds.
 - **Candidate (2026-11-17):** v13-trim38k-L20 (288 MB, 4 layers pruned and healed) scores the same as v13 on every clean set; waiting on a Pixel speed run before it replaces v13 in the app. Width pruning (F2560) was worse at the same size.
+- **Smaller file (2026-11-18):** the same L20 model as IQ3_M-imat is 226 MB (-22%) and loses about one point on the two large v2 sets (93.4 / 88.9 / 86.8 against 94.4 / 89.9 / 86.8); published in the L20 GGUF repo, not timed on the Pixel. Quantization-aware distillation for Q3_K gave nothing over plain Q3_K_M (parked).
 
 ## How to read the numbers
 
@@ -321,3 +322,14 @@ Full write-up and how to redo it for a new version: `VOCAB_TRIM.md`.
 - **Not done:** speed on the Pixel (v11-L20 was +24% generation; same layer count and file size, so similar is expected) and an in-app test.
 - **Published 2026-11-17:** `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k-L20` (bf16) and `...-L20-GGUF` (F16, Q6_K, Q4_K_M-imat, Q4_0-imat), dataset `ryuma007/hishab-synthetic-v7`. F2560 stays on the volume, unpublished.
 - **Verdict:** L20 is the next app candidate once it is timed on the Pixel; width pruning parked. Cost of both experiments: two A100 heals plus an A10G probe, roughly $4 to $5 at list prices.
+
+### Below 4 bits on v13-L20: plain Q3/IQ3 are enough, QAD does not help (2026-11-18)
+- **Question:** would quantization-aware distillation (QAD) make 3-bit files usable? Earlier reasoning said no (4-bit is already within noise of bf16, nothing to recover); the better question is how much plain 3-bit loses on the pruned model, because that is the room QAD has.
+- **Plain 3-bit (no training), imatrix from train prompts, scored by llama-server on the three v2 sets, v13-L20:** Q4_K_M-imat (288 MB) 94.4 / 89.9 / 86.8 (test_clean_v2 / numbers_clean_v2 / small_amounts_v2); **Q3_K_M-imat (237 MB) 93.8 / 88.9 / 84.2; IQ3_M-imat (226 MB) 93.4 / 88.9 / 86.8.** On the old sets IQ3_M-imat gets test_clean 92.9, numbers_clean 89.3, test 79.3, numbers 75.1. Parseable output 100%. IQ3_M-imat is 22% smaller than the shipped-size file for about one point on the two big sets, and equal on small amounts.
+- **QAD (`ml/modal_app/qad.py`):** start from v13-L20, pass 126 decoder Linear weights (everything but lm_head, the tiny in_proj_a/in_proj_b and anything not a multiple of 256 wide) through a fake Q3_K quantizer with a straight-through gradient (256-weight super-blocks, 16 sub-blocks of 16, 3-bit values in [-4, 3], 6-bit sub-block scales; the sub-block scale is absmax / -4 where llama.cpp searches for the best one), loss = KL to the unpruned v13-trim38k on answer tokens + 0.2 x CE, 3 epochs on train_v13, lr 1e-5, batch 16, one A100-80GB. Then the latent weights go through the normal gguf.py path (imatrix + llama-quantize Q3_K_M-imat).
+- **Result, real Q3_K_M-imat file (237 MB), plain in brackets:** test_clean_v2 **93.2** (93.8), numbers_clean_v2 **89.2** (88.9), small_amounts_v2 **78.9** (84.2). The fake-quantized bf16 model scored 93.4 / 89.9 / 82.9, so the simulated quantizer and llama.cpp's differ in what they do to small amounts.
+- **Reading it:** no gain. Two of the three moves are inside run-to-run churn; the five-point loss on small amounts is the one that looks real. Likely causes (not tested): the fake quantizer is not llama.cpp's (scale search, mixed per-tensor types in Q3_K_M), and the embeddings were left unquantized in training but the file quantizes them.
+- **Not done:** Q2 (not started: plain 3-bit already loses little and QAD did not help), speed of any of these files on the Pixel, probes on IQ3_M-imat, an in-app test.
+- **Published 2026-11-18:** `IQ3_M-imat` added to `ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k-L20-GGUF` (the Q3_K_M-imat and the QAD run stay on the volume, unpublished).
+- **Verdict:** IQ3_M-imat (226 MB) is the smallest candidate with Q4-level scores; QAD parked. Cost: the QAD run plus the CPU builds, roughly $3 to $5 at list prices (estimate, the bill was not read).
+
