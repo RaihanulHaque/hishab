@@ -188,3 +188,28 @@ versions:
       probes: {Q6_K: 15/20, Q4_K_M-imat: 16/20}
       notes: in-app 2026-10-21, 5 of 6 right incl. both v2 rules (bou ke bazarer jonno -> grocery, bua er beton -> salary expense), "sat sho taka oushudh" as food; borderline probes flip between runs; speed not comparable (thermal status 2, charging)
     app_quant: Q4_K_M-imat
+
+  - label: v13-trim38k-L20
+    date: 2026-11-17
+    run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__L20
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__L20
+    fmt: pipe_signed
+    train_split: train_v13
+    hub: ryuma007/hishab-qwen3.5-0.8b-pipe-signed-full-v13-trim38k-L20
+    dataset: ryuma007/hishab-synthetic-v7
+    change: layers 8, 9, 12, 13 removed from v13-trim38k and healed on train_v13 (288 MB, no accuracy loss)
+    training: healed 2 epochs from v13-trim38k (KL to it + 0.2 CE), lr 2e-5, ~37 min on one A100
+    status: experiment
+    measurements:
+      probes: {Q6_K: 16/20, Q4_K_M-imat: 15/20}
+      notes: probes on Linux kiln-cli 2026-11-17; not yet timed on the Pixel (v11-trim38k-L20 was +24%)
+
+  - label: v13-trim38k-F2560
+    date: 2026-11-17
+    run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__F2560
+    gguf_run: qwen3.5-0.8b__pipe_signed__full__v13__trim38k__F2560
+    fmt: pipe_signed
+    train_split: train_v13
+    change: width pruning, every MLP 3584 -> 2560 neurons, healed on train_v13 (297 MB, ~1 point lower)
+    training: healed 2 epochs from v13-trim38k (KL to it + 0.2 CE), lr 2e-5, ~50 min on one A100
+    status: experiment

@@ -14,7 +14,7 @@ from pathlib import Path
 import modal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from modal_app.common import RUNS_DIR, VOLUMES, app, gguf_image, hf_secret  # noqa: E402
+from modal_app.common import RUNS_DIR, VOLUMES, app, gguf_image, hf_secret, prune_note  # noqa: E402
 
 CARD = """---
 license: apache-2.0
@@ -144,7 +144,8 @@ def push_model(run: str, repo_prefix: str = "ryuma007/hishab-", dataset: str = "
                               {"description": "rickshaw", "amount": 80.0, "category": "transport", "type": "expense"}],
                              indent=1)
     if meta.get("vocab_trim"):
-        format_note += TRIM_NOTE.format(kept=meta["vocab_trim"]["kept"]) + TRIM_EVAL_NOTE
+        format_note += TRIM_NOTE.format(kept=meta["vocab_trim"]["kept"]) + ("" if meta.get("prune") else TRIM_EVAL_NOTE)
+    format_note += prune_note(meta)
     training = ("full fine-tune, all weights" if meta.get("tune") == "full"
                 else f"LoRA r={meta.get('lora_r', 16)}, merged")
     training += f", {meta['epochs']:g} epochs, lr {meta['lr']:g}"
